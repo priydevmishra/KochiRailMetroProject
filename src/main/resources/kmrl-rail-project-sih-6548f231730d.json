@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "kmrl-rail-project-sih",
+  "private_key_id": "6548f231730dbcb62ca1473b32f6cf301fd907ab",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC59EpyWZkeTBOy\nlhxzkUPByyIxv8q6LNklJic5U2TEM+3euyIJtQ7d+pbPvYDo/6lnaMQSuYcqKX7g\n0wNfdaJV8ZK/hMFYPrSlbfuT0yPOhVAWMoDDh9X0G5x4WjRzrxALM9t6l7WplP/2\nobFlk1ivqKe6vwOCKu2+a/YR48SVWesG49dN5tuK7Y8RneRIGt6/e523NuYBnrBx\nwQC9P1SnaRwqrpWRJeyjwaCMglGjtM0YZWvbPSxpY+DH2y1Pwj2av0rs16oXsDon\n3QwDPNoJHcDPy7PtBJXA/pto9rlDZ3JlRKli/g/elghuOGN8npS6WeWeV4pwVt/z\ntDYcd0PTAgMBAAECggEAT4/a5Ic6cNCbIu+AN+BA7eNke4W0jyjONctXv/rS4/HW\nBlTp8N5TgJ2Ntk++HrL4v+J+9gYEc4EypK4URN03em80WxZJhWC6+QcQO4T8zomS\npRSxrDdrzxibP5FU3ORbyHdFInRTyT2TsOoo1S2QpgPS1B+TODf25eEadTgPbdjC\nqfUTYFb/ds5SLZR00MXN/MgHQFL8pJyEU9TVgM2HT+gkEZ2MjAbG/Ts0UVZdXN4v\n5gs4pAdaetjaKZK4ylvLaVd47KnNe4t2ihfPnwb4b6eqcfc24kqLHAq84dU7bqUh\ngU38kftPnMdcKa5Os8/5PmWg7dSsDULklyIku31NiQKBgQDm3BRSDgXSY/fQ4rlF\nQ4FGJLQx/VAuhcjKfTlrG5KhJuFO9SnBwy5jCKFEE+rg6kRDQXiqv5keEEjwLKdf\nJ5kHgVZgpTCYPe+d3uUQ8dVbI9SFFNmezeMOhtC+anZcrK99vgZ7Th8t3osDVkLX\nLq/5EkmTWJSStSgfwf+AXkfNKQKBgQDONFXRtzfrfLd6lDn0/DjxU2YOrZjLovRj\nJZ0dHURZJFXKInR/W/GaZTNKhZOq/y9kMPqGVDjPWNnkGWzob5OwH/v2ynSkCTV0\noBSjAmhyDJDCN8v2iFwo5h+0MEL0Bf19hDi8PVftbNPhxBqFCBRZeOaxFsCJJPIR\nO7gPzkMsmwKBgQDO4aZsKhjZg7COxr7U7TuqCjZZHfJ+3nEj1Lhh3aG3PMpoIZe8\nBhdJtHAgO+EekZF+2+swyOaEZH+Yi8upoCio6yTnEuHLbKWQyjBo0O8r754BbL/g\nagzx9aqXGXzca/wQKPxR/549UtMsuF7JyxLzl4nLu3PZTPKaExXOia66kQKBgQC0\nqk32rJymCmOHVo9hAguyBOwKODcDVAbjR3VcqOPVZmxz6bRAUgJg0AIcbORwkZyo\nH/Gf9/K+WI6vt0cgb4HqcluEYuXHQvo+8HKkT9vK8Q9z2wctPVPh0Z49dXtz6juq\n2UoMQ4LiVtNdnz/NBsMtkSwuREz03BXq23PtBT79uQKBgC5l6vmxJL16/qsxhT8X\nb/NZ8oD4G1D1n60lvgibqLHKa6XtVemqB26smPbjkvl+WRJLEf8bz3YxfuqoJzrd\nxeuSUGnIikIEI4L/TSGRI4SnXipiyNEJb/RlF7Yb7VA/lo0vtAOztHjzNZn8PYWZ\nj0UIxBKqS2ex4kw+XPu/HTNo\n-----END PRIVATE KEY-----\n",
+  "client_email": "kmrl-project@kmrl-rail-project-sih.iam.gserviceaccount.com",
+  "client_id": "117877878990427657091",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/kmrl-project%40kmrl-rail-project-sih.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
