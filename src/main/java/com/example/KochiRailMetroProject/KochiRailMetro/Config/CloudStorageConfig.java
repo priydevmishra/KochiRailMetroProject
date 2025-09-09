@@ -11,10 +11,10 @@ import java.io.IOException;
 
 @Configuration
 public class CloudStorageConfig {
-    @Value("${kmrl-rail-project-sih}")
+    @Value("${google.cloud.project-id}")
     private String projectId;
 
-    @Value("${src/main/resources/kmrl-rail-project-sih-6548f231730d.json}")
+    @Value("${google.cloud.credentials.location}")
     private String credentialsLocation;
 
     @Bean

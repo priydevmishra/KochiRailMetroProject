@@ -130,7 +130,12 @@ public class KMRLDocumentProcessor {
         workflowRepository.save(workflow);
 
         // Send notifications to all department heads
-        notificationService.sendRegulatoryAlert(document);
+        notificationService.sendRegulatoryAlert(
+                document,
+                "📜 Regulatory Document Uploaded",
+                "A new regulatory document has been uploaded: " + document.getFilename(),
+                3 // HIGH priority
+        );
 
         addTag(document, "regulatory");
         addTag(document, "compliance-required");

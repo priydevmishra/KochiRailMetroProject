@@ -1,5 +1,6 @@
 package com.example.KochiRailMetroProject.KochiRailMetro.Security;
 
+import com.example.KochiRailMetroProject.KochiRailMetro.Service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
                 Long userId = tokenProvider.getUserIdFromJWT(jwt);
-                UserDetails userDetails = userDetailsService.loadUserById(userId);
+                UserDetails userDetails = ((UserDetailsServiceImpl) userDetailsService).loadUserById(userId);
 
                 var authentication = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());

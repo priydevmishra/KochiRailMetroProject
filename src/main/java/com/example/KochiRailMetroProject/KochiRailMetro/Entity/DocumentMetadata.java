@@ -1,37 +1,34 @@
 package com.example.KochiRailMetroProject.KochiRailMetro.Entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
-@Data
+@Table(name = "document_metadata")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name="document_metadata")
+@Builder
 public class DocumentMetadata {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "document_id")
-    private Document document;
-
-    @Column(nullable = false, length = 100)
+    // yahan key ko meta_key bana diya
+    @Column(name = "meta_key", nullable = false, length = 100)
     private String key;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "meta_value", length = 255)
     private String value;
 
-    @Column(name = "data_type", length = 20)
-    private String dataType = "string";
+    // naya column jisse tumhara setDataType(...) kaam karega
+    @Column(name = "data_type", length = 100)
+    private String dataType;
 
-    @CreationTimestamp
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    // agar Document se relation hai
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_id", nullable = false)
+    private Document document;
 }
