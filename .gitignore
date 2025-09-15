@@ -31,3 +31,23 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Logs ###
+logs/
+*.log
+
+### Uploads (local storage) ###
+uploads/
+
+### Google Cloud Keys (DO NOT COMMIT) ###
+*.json
+/config/gcp-key.json
+/src/main/resources/gcp-key.json
+
+### Maven ###
+target/
+*.class
+
+### OS-specific ###
+.DS_Store
+Thumbs.db
