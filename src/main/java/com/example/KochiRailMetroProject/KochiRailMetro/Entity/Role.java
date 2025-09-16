@@ -6,11 +6,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name="roles")
+@Table(name = "roles")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Role {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -18,8 +19,6 @@ public class Role {
     @Column(unique = true, nullable = false, length = 50)
     private String name;
 
+    @Column(length = 200)
     private String description;
-
-    @Column(columnDefinition = "JSON")
-    private String permissions;
 }

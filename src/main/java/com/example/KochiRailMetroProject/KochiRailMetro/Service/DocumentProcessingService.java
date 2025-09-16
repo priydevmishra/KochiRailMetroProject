@@ -5,35 +5,30 @@ import com.example.KochiRailMetroProject.KochiRailMetro.Entity.DocumentContent;
 import com.example.KochiRailMetroProject.KochiRailMetro.Entity.DocumentMetadata;
 import com.example.KochiRailMetroProject.KochiRailMetro.Repository.DocumentRepository;
 import jakarta.transaction.Transactional;
-import lombok.Value;
-
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Service
 public class DocumentProcessingService {
-
     private final DocumentRepository documentRepository;
-    private final CloudStorageService cloudStorageService;
+    private final LocalFileStorageService fileStorageService; // UPDATED
     private final MLService mlService;
 
+    // ✅ Updated constructor
     public DocumentProcessingService(DocumentRepository documentRepository,
-                                     CloudStorageService cloudStorageService,
+                                     LocalFileStorageService fileStorageService, // UPDATED
                                      MLService mlService) {
         this.documentRepository = documentRepository;
-        this.cloudStorageService = cloudStorageService;
+        this.fileStorageService = fileStorageService; // UPDATED
         this.mlService = mlService;
     }
 
@@ -49,8 +44,8 @@ public class DocumentProcessingService {
             content.setDocument(document);
             content.setProcessingStatus(DocumentContent.ProcessingStatus.PROCESSING);
 
-            // Download file from cloud storage
-            byte[] fileData = cloudStorageService.downloadFile(document.getCloudUrl());
+            // ✅ Download file from local storage instead of cloud
+            byte[] fileData = fileStorageService.downloadFile(document.getCloudUrl());
 
             // Extract text based on file type
             String extractedText = extractTextFromFile(fileData, document.getMimeType());
@@ -82,7 +77,6 @@ public class DocumentProcessingService {
             }
             throw new RuntimeException("Document processing failed", e);
         }
-
         return CompletableFuture.completedFuture(null);
     }
 
@@ -90,7 +84,6 @@ public class DocumentProcessingService {
         if (mimeType == null) {
             return "";
         }
-
         switch (mimeType.toLowerCase()) {
             case "application/pdf":
                 return extractTextFromPdf(fileData);
@@ -122,9 +115,7 @@ public class DocumentProcessingService {
     }
 
     private void extractGmailMetadata(Document document, String content) {
-        // Extract email-specific metadata
         if (content != null) {
-            // Simple email metadata extraction
             if (content.contains("From:")) {
                 String fromLine = extractLine(content, "From:");
                 addMetadata(document, "sender", fromLine);
@@ -141,14 +132,10 @@ public class DocumentProcessingService {
     }
 
     private void extractWhatsAppMetadata(Document document, String content) {
-        // Extract WhatsApp-specific metadata
         if (content != null) {
-            // Simple WhatsApp metadata extraction
             if (content.contains("WhatsApp Chat")) {
                 addMetadata(document, "chat_type", "WhatsApp");
             }
-
-            // Count messages (rough estimate)
             long messageCount = content.lines()
                     .filter(line -> line.matches(".*\\d{1,2}/\\d{1,2}/\\d{2,4}.*"))
                     .count();
@@ -172,13 +159,9 @@ public class DocumentProcessingService {
         metadata.setKey(key);
         metadata.setValue(value);
         metadata.setDataType("string");
-
         if (document.getMetadata() == null) {
             document.setMetadata(new HashSet<>());
         }
         document.getMetadata().add(metadata);
     }
 }
-
-
-

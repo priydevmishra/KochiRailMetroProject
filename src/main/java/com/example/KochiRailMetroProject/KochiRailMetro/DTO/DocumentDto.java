@@ -28,6 +28,8 @@ public class DocumentDto {
     private String summary;
     private String mlSummary;
     private DocumentContent.ProcessingStatus processingStatus;
+    private String title;
+    private String description;
 
     public DocumentDto(Document document) {
         this.id = document.getId();
@@ -46,5 +48,6 @@ public class DocumentDto {
         this.summary = (document.getContent() != null) ? document.getContent().getSummary() : null;
         this.mlSummary = (document.getContent() != null) ? document.getContent().getMlSummary() : null;
         this.processingStatus = (document.getContent() != null) ? document.getContent().getProcessingStatus() : null;
+
     }
 }

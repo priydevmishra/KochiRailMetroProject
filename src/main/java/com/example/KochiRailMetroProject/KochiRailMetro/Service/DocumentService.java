@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,7 +31,7 @@ public class DocumentService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final TagRepository tagRepository;
-    private final CloudStorageService cloudStorageService;
+    private final LocalFileStorageService fileStorageService;
     private final DocumentProcessingService documentProcessingService;
     private final AuditService auditService;
 
@@ -38,14 +39,14 @@ public class DocumentService {
                            UserRepository userRepository,
                            CategoryRepository categoryRepository,
                            TagRepository tagRepository,
-                           CloudStorageService cloudStorageService,
+                           LocalFileStorageService fileStorageService,
                            DocumentProcessingService documentProcessingService,
                            AuditService auditService) {
         this.documentRepository = documentRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.tagRepository = tagRepository;
-        this.cloudStorageService = cloudStorageService;
+        this.fileStorageService = fileStorageService;
         this.documentProcessingService = documentProcessingService;
         this.auditService = auditService;
     }
@@ -56,7 +57,6 @@ public class DocumentService {
                                       Set<String> tagNames,
                                       UserPrincipal currentUser) throws IOException {
 
-        // Validate file
         if (file.isEmpty()) {
             throw new IllegalArgumentException("File is empty");
         }
@@ -65,29 +65,27 @@ public class DocumentService {
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Upload to cloud storage
+        // Upload to local storage
         String folder = source.name().toLowerCase();
-        String cloudUrl = cloudStorageService.uploadFile(file, folder);
+        String fileUrl = fileStorageService.uploadFile(file, folder);
 
         // Create document entity
         Document document = new Document();
         document.setFilename(generateUniqueFilename(file.getOriginalFilename()));
         document.setOriginalFilename(file.getOriginalFilename());
-        document.setCloudUrl(cloudUrl);
+        document.setCloudUrl(fileUrl); // reused field for local path
         document.setFileSize(file.getSize());
         document.setMimeType(file.getContentType());
         document.setDocumentSource(source);
         document.setUploadedBy(user);
         document.setChecksum(calculateChecksum(file.getBytes()));
 
-        // Set category if provided
         if (categoryId != null) {
             Category category = categoryRepository.findById(categoryId)
                     .orElseThrow(() -> new RuntimeException("Category not found"));
             document.setCategory(category);
         }
 
-        // Process tags
         if (tagNames != null && !tagNames.isEmpty()) {
             Set<Tag> tags = tagNames.stream()
                     .map(this::findOrCreateTag)
@@ -149,12 +147,10 @@ public class DocumentService {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Document not found"));
 
-        // Soft delete
         document.setIsDeleted(true);
         document.setUpdatedAt(LocalDateTime.now());
         documentRepository.save(document);
 
-        // Log audit
         auditService.logAction(currentUser.getId(), document.getId(), "DOCUMENT_DELETED",
                 "Document deleted: " + document.getFilename());
     }
@@ -167,11 +163,19 @@ public class DocumentService {
             throw new RuntimeException("Document has been deleted");
         }
 
-        // Log download
         auditService.logAction(currentUser.getId(), document.getId(), "DOCUMENT_DOWNLOADED",
                 "Document downloaded: " + document.getFilename());
 
-        return cloudStorageService.downloadFile(document.getCloudUrl());
+        try {
+            return fileStorageService.downloadFile(document.getCloudUrl());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to download document", e);
+        }
+    }
+
+    // ✅ New method for GmailService
+    public Optional<Document> findById(Long id) {
+        return documentRepository.findById(id);
     }
 
     private String generateUniqueFilename(String originalFilename) {

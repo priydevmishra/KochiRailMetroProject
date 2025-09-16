@@ -1,6 +1,6 @@
 package com.example.KochiRailMetroProject.KochiRailMetro.Service;
 
-
+import com.example.KochiRailMetroProject.KochiRailMetro.Entity.AuditAction;
 import com.example.KochiRailMetroProject.KochiRailMetro.Entity.AuditLog;
 import com.example.KochiRailMetroProject.KochiRailMetro.Entity.Document;
 import com.example.KochiRailMetroProject.KochiRailMetro.Entity.User;
@@ -45,7 +45,15 @@ public class AuditService {
                 auditLog.setDocument(document);
             }
 
-            auditLog.setAction(action);
+            // ✅ Convert String to Enum safely
+            try {
+                AuditAction auditAction = AuditAction.valueOf(action);
+                auditLog.setAction(auditAction);
+            } catch (IllegalArgumentException e) {
+                System.err.println("Invalid AuditAction: " + action);
+                return; // Don't save invalid enum
+            }
+
             auditLog.setDetails(details);
 
             // Get request details if available

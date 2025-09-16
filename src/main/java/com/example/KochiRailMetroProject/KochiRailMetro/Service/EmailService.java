@@ -15,7 +15,7 @@ public class EmailService {
     @Value("${app.mail.from:noreply@kmrl.com}")
     private String fromEmail;
 
-    @Value("${app.base-url:http://localhost:8080}")
+    @Value("${app.base-url:http://localhost:8090}")
     private String baseUrl;
 
     public EmailService(JavaMailSender mailSender) {

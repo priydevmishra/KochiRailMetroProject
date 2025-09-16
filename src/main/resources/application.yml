@@ -1,23 +1,24 @@
 server:
-  port: 8080
+  port: 8090
   servlet:
     context-path: /api
-
 spring:
+  application:
+    name: kmrl-document-management
+
   datasource:
-    url: jdbc:mysql://localhost:3306/kmrl_project?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/kmrl_project
+    driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: Amaronki123qwe@
-    driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update   # options: create, create-drop, update, validate, none
+      ddl-auto: update   # Dev me update, prod me validate
     show-sql: true
     properties:
       hibernate:
-        format_sql: true
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.MySQL8Dialect
 
   servlet:
     multipart:
@@ -34,52 +35,62 @@ task:
 # JWT Configuration
 app:
   jwtSecret: ${JWT_SECRET:mySecretKey123456789mySecretKey123456789}
-  jwtExpirationInMs: 86400000 # 24 hours
+  jwtExpirationInMs: 86400000
+  base-url: ${BASE_URL:http://localhost:8080}
 
-# Google Cloud Configuration
-google:
-  cloud:
-    project-id: kmrl-rail-project-sih
-    credentials:
-      location: classpath:kmrl-rail-project-sih-6548f231730d.json
-    storage:
-      bucket: kmrl-doc
-      base-url: https://storage.googleapis.com
-  gmail:
-    credentials:
-      file: classpath:gmail-credientials.json
+  # Local File Storage Configuration
+  file-storage:
+    base-path: ./uploads
+    max-file-size: 104857600 # 100MB in bytes
+    allowed-extensions: pdf,doc,docx,txt,jpg,jpeg,png,gif,xls,xlsx
 
-# ML Service Configuration
+# ML Service Configuration (Mock Mode)
 ml:
   service:
     url: ${ML_SERVICE_URL:http://localhost:5000}
     api-key: ${ML_API_KEY:your-ml-api-key}
+    mock-mode: true
+
+# Email Service (Mock Mode)
+mail:
+  debug-mode: true
 
 # Logging Configuration
 logging:
   level:
-    com.kmrl.docmanagement: DEBUG
-    org.springframework.security: DEBUG
+    com.example.KochiRailMetroProject.KochiRailMetro: DEBUG
+    org.springframework.security: WARN
     org.hibernate.SQL: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
   file:
-    path: logs/
-    name: kmrl-document-management.log
-
-
+    name: logs/kmrl-document-management.log
+google:
+  gmail:
+    credentials:
+      file: "C:/Users/PRIYD/Documents/SpringBoot Practice/KochiRailMetro/credentials/gmail-credentials.json"
+    user:
+      email: "priydevmishra389@gmail.com"
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: amanmishra389123@gmail.com
-    password: ${MAIL_PASSWORD:your-mail-password}
+    host: smtp.gmail.com
+    port: 587
+    username: priydevmishra389@gmail.com   # your Gmail email
+    password: hfvhabuzcjhkybxt           # your App Password
+    protocol: smtp
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
-    from: ${MAIL_FROM:noreply@kmrl.com}
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+    test-connection: true
 
-# Base URL
-base-url: ${BASE_URL:http://localhost:8080}
+  app:
+    mail:
+      from: priydevmishra389@gmail.com      # sender email
+      base-url: http://localhost:8080
+  main:
+    allow-circular-references: true
