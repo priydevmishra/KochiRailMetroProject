@@ -29,8 +29,6 @@ public class UserRegistrationDto {
     @NotNull(message = "Department ID is required")
     private Long departmentId;
 
-    private String employeeId;
-
     private String notificationPreferences = "EMAIL,SYSTEM";
 
     private Boolean isActive = true;

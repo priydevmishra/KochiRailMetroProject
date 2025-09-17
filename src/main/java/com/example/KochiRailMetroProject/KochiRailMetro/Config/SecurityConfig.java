@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,7 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity(prePostEnabled = true)   // ✅ FIXED (new annotation)
 public class SecurityConfig {
 
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
@@ -36,27 +36,24 @@ public class SecurityConfig {
         http
                 // Disable CSRF (since we're using JWT)
                 .csrf(csrf -> csrf.disable())
-
                 // Authorization rules
                 .authorizeHttpRequests(auth -> auth
                         // ✅ Allow login & registration APIs
                         .requestMatchers("/api/v1/auth/**").permitAll()
-
                         // ✅ Allow Swagger & API docs
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
                         // ✅ Allow health check
                         .requestMatchers("/api/v1/health/**").permitAll()
-
                         // ✅ Allow Gmail & email (public APIs you defined)
                         .requestMatchers(HttpMethod.POST, "/api/v1/gmail/sync").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/email/**").permitAll()
-                        .requestMatchers("/api/v1/users/register/manager").hasRole("ADMIN")
-
-                        // Everything else requires authentication
+                        // ✅ Manager register only by Admin
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/register/manager").hasRole("ADMIN")
+                        // ✅ Employee register only by Manager
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users/register/employee").hasRole("MANAGER")
+                        // Everything else
                         .anyRequest().authenticated()
                 )
-
                 // Custom entry point (handles 401s)
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
                     // Special handling for Gmail sync
@@ -67,7 +64,6 @@ public class SecurityConfig {
                     }
                     jwtAuthenticationEntryPoint.commence(request, response, authException);
                 }))
-
                 // Stateless session (since using JWT)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

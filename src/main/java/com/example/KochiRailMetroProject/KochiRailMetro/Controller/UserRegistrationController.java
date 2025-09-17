@@ -1,6 +1,5 @@
 package com.example.KochiRailMetroProject.KochiRailMetro.Controller;
 
-
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.ApiResponse;
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.UserRegistrationDto;
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.UserDto;
@@ -13,7 +12,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import jakarta.validation.Valid;
 import java.util.List;
 
@@ -31,36 +29,26 @@ public class UserRegistrationController {
         this.departmentService = departmentService;
     }
 
-    // Admin can register Managers only
+    // 🔹 Admin can register Managers (Admin chooses Department from dropdown)
     @PostMapping("/register/manager")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserDto>> registerManager(
             @Valid @RequestBody UserRegistrationDto registrationDto,
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
-        try {
-            UserDto createdUser = userRegistrationService.registerManager(registrationDto, currentUser);
-            return ResponseEntity.ok(new ApiResponse<>(true, "Manager registered successfully", createdUser));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, e.getMessage()));
-        }
+        UserDto createdUser = userRegistrationService.registerManager(registrationDto, currentUser);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Manager registered successfully", createdUser));
     }
 
-    // Manager can register Employees in their department
+    // 🔹 Manager can register Employees (EmployeeId auto-generated, Dept auto-mapped)
     @PostMapping("/register/employee")
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<ApiResponse<UserDto>> registerEmployee(
             @Valid @RequestBody UserRegistrationDto registrationDto,
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
-        try {
-            UserDto createdUser = userRegistrationService.registerEmployee(registrationDto, currentUser);
-            return ResponseEntity.ok(new ApiResponse<>(true, "Employee registered successfully", createdUser));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, e.getMessage()));
-        }
+        UserDto createdUser = userRegistrationService.registerEmployee(registrationDto, currentUser);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Employee registered successfully", createdUser));
     }
 
     // Get all managers (Admin only)
@@ -76,7 +64,6 @@ public class UserRegistrationController {
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<ApiResponse<List<UserDto>>> getDepartmentEmployees(
             @AuthenticationPrincipal UserPrincipal currentUser) {
-
         List<UserDto> employees = userRegistrationService.getEmployeesByManager(currentUser);
         return ResponseEntity.ok(new ApiResponse<>(true, "Department employees retrieved successfully", employees));
     }
@@ -95,14 +82,8 @@ public class UserRegistrationController {
             @PathVariable Long userId,
             @Valid @RequestBody UserRegistrationDto updateDto,
             @AuthenticationPrincipal UserPrincipal currentUser) {
-
-        try {
-            UserDto updatedUser = userRegistrationService.updateUser(userId, updateDto, currentUser);
-            return ResponseEntity.ok(new ApiResponse<>(true, "User updated successfully", updatedUser));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, e.getMessage()));
-        }
+        UserDto updatedUser = userRegistrationService.updateUser(userId, updateDto, currentUser);
+        return ResponseEntity.ok(new ApiResponse<>(true, "User updated successfully", updatedUser));
     }
 
     // Delete manager (Admin only)
@@ -111,14 +92,8 @@ public class UserRegistrationController {
     public ResponseEntity<ApiResponse<String>> deleteManager(
             @PathVariable Long userId,
             @AuthenticationPrincipal UserPrincipal currentUser) {
-
-        try {
-            userRegistrationService.deleteManager(userId, currentUser);
-            return ResponseEntity.ok(new ApiResponse<>(true, "Manager deleted successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, e.getMessage()));
-        }
+        userRegistrationService.deleteManager(userId, currentUser);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Manager deleted successfully"));
     }
 
     // Delete employee (Manager can delete employees in their department)
@@ -127,19 +102,13 @@ public class UserRegistrationController {
     public ResponseEntity<ApiResponse<String>> deleteEmployee(
             @PathVariable Long userId,
             @AuthenticationPrincipal UserPrincipal currentUser) {
-
-        try {
-            userRegistrationService.deleteEmployee(userId, currentUser);
-            return ResponseEntity.ok(new ApiResponse<>(true, "Employee deleted successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, e.getMessage()));
-        }
+        userRegistrationService.deleteEmployee(userId, currentUser);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Employee deleted successfully"));
     }
 
-    // Get available departments for registration
+    // Get available departments for registration (Admin creates manager, so dropdown needed here)
     @GetMapping("/departments")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<DepartmentDto>>> getAvailableDepartments() {
         List<DepartmentDto> departments = departmentService.getAllDepartments();
         return ResponseEntity.ok(new ApiResponse<>(true, "Departments retrieved successfully", departments));
@@ -149,7 +118,6 @@ public class UserRegistrationController {
     @GetMapping("/profile")
     public ResponseEntity<ApiResponse<UserDto>> getUserProfile(
             @AuthenticationPrincipal UserPrincipal currentUser) {
-
         UserDto userProfile = userRegistrationService.getUserProfile(currentUser);
         return ResponseEntity.ok(new ApiResponse<>(true, "Profile retrieved successfully", userProfile));
     }
@@ -159,13 +127,7 @@ public class UserRegistrationController {
     public ResponseEntity<ApiResponse<UserDto>> updateOwnProfile(
             @Valid @RequestBody UserRegistrationDto updateDto,
             @AuthenticationPrincipal UserPrincipal currentUser) {
-
-        try {
-            UserDto updatedUser = userRegistrationService.updateOwnProfile(updateDto, currentUser);
-            return ResponseEntity.ok(new ApiResponse<>(true, "Profile updated successfully", updatedUser));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, e.getMessage()));
-        }
+        UserDto updatedUser = userRegistrationService.updateOwnProfile(updateDto, currentUser);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Profile updated successfully", updatedUser));
     }
 }

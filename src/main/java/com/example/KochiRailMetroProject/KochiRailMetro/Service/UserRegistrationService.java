@@ -5,17 +5,18 @@ import com.example.KochiRailMetroProject.KochiRailMetro.DTO.UserDto;
 import com.example.KochiRailMetroProject.KochiRailMetro.Entity.User;
 import com.example.KochiRailMetroProject.KochiRailMetro.Entity.Role;
 import com.example.KochiRailMetroProject.KochiRailMetro.Entity.Department;
+import com.example.KochiRailMetroProject.KochiRailMetro.Exception.BadRequestException;
 import com.example.KochiRailMetroProject.KochiRailMetro.Repository.UserRepository;
 import com.example.KochiRailMetroProject.KochiRailMetro.Repository.RoleRepository;
 import com.example.KochiRailMetroProject.KochiRailMetro.Repository.DepartmentRepository;
 import com.example.KochiRailMetroProject.KochiRailMetro.Security.UserPrincipal;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,16 +38,14 @@ public class UserRegistrationService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    // Register manager (Admin only)
     public UserDto registerManager(UserRegistrationDto registrationDto, UserPrincipal currentUser) {
-        // Validate that current user is admin
         if (!hasRole(currentUser, "ADMIN")) {
             throw new RuntimeException("Only admins can register managers");
         }
 
-        // Check if username or email already exists
         validateUniqueUser(registrationDto);
 
-        // Get department
         Department department = departmentRepository.findById(registrationDto.getDepartmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found"));
 
@@ -58,61 +57,71 @@ public class UserRegistrationService {
                 .collect(Collectors.toList());
 
         if (!existingManagers.isEmpty()) {
-            throw new RuntimeException("Department already has a manager assigned");
+            throw new BadRequestException("Department already has a manager assigned");
         }
 
-        User user = createUser(registrationDto, "MANAGER", department);
-        user.setEmployeeId(generateEmployeeId("MGR", department.getCode()));
 
+        User user = createUser(registrationDto, "MANAGER", department);
+        user.setEmployeeId(generateEmployeeId("MGR", department.getCode(), department));
         User savedUser = userRepository.save(user);
+
         return convertToDto(savedUser);
     }
 
+    // Register employee (Manager only)
+    @Transactional
     public UserDto registerEmployee(UserRegistrationDto registrationDto, UserPrincipal currentUser) {
-        // Validate that current user is manager
-        if (!hasRole(currentUser, "MANAGER")) {
-            throw new RuntimeException("Only managers can register employees");
-        }
-
-        // Get current user and their department
         User manager = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new RuntimeException("Manager not found"));
 
-        Department department = manager.getDepartment();
-        if (department == null) {
-            throw new RuntimeException("Manager must be assigned to a department");
+        Department managerDepartment = manager.getDepartment();
+        if (managerDepartment == null) {
+            throw new RuntimeException("Manager is not assigned to any department");
         }
 
-        // Ensure employee is being registered in manager's department
-        if (!registrationDto.getDepartmentId().equals(department.getId())) {
+        // Restrict manager to only their own department
+        if (registrationDto.getDepartmentId() != null &&
+                !registrationDto.getDepartmentId().equals(managerDepartment.getId())) {
             throw new RuntimeException("Managers can only register employees in their own department");
         }
 
-        // Check if username or email already exists
-        validateUniqueUser(registrationDto);
+        User employee = new User();
+        employee.setUsername(registrationDto.getUsername());
+        employee.setEmail(registrationDto.getEmail());
+        employee.setPassword(passwordEncoder.encode(registrationDto.getPassword()));
+        employee.setFullName(registrationDto.getFullName());
+        employee.setPhoneNumber(registrationDto.getPhoneNumber());
+        employee.setNotificationPreferences(registrationDto.getNotificationPreferences());
+        employee.setIsActive(registrationDto.getIsActive());
 
-        User user = createUser(registrationDto, "EMPLOYEE", department);
-        user.setEmployeeId(generateEmployeeId("EMP", department.getCode()));
+        // Assign same department as manager
+        employee.setDepartment(managerDepartment);
 
-        User savedUser = userRepository.save(user);
-        return convertToDto(savedUser);
+        // Auto-generate employee ID
+        String employeeId = generateEmployeeId("EMP", managerDepartment.getCode(), managerDepartment);
+        employee.setEmployeeId(employeeId);
+
+        Role employeeRole = roleRepository.findByName("EMPLOYEE")
+                .orElseThrow(() -> new RuntimeException("Role not found"));
+        employee.setRoles(Set.of(employeeRole));
+
+        User savedEmployee = userRepository.save(employee);
+        return convertToDto(savedEmployee);
     }
 
+    // Update user
     public UserDto updateUser(Long userId, UserRegistrationDto updateDto, UserPrincipal currentUser) {
         User userToUpdate = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Check permissions
         if (!canUpdateUser(currentUser, userToUpdate)) {
             throw new RuntimeException("Insufficient permissions to update this user");
         }
 
-        // Update allowed fields
         userToUpdate.setFullName(updateDto.getFullName());
         userToUpdate.setPhoneNumber(updateDto.getPhoneNumber());
         userToUpdate.setNotificationPreferences(updateDto.getNotificationPreferences());
 
-        // Admin and managers can update more fields
         if (hasRole(currentUser, "ADMIN") || hasRole(currentUser, "MANAGER")) {
             if (updateDto.getEmail() != null && !updateDto.getEmail().equals(userToUpdate.getEmail())) {
                 if (userRepository.existsByEmail(updateDto.getEmail())) {
@@ -120,7 +129,6 @@ public class UserRegistrationService {
                 }
                 userToUpdate.setEmail(updateDto.getEmail());
             }
-
             if (updateDto.getIsActive() != null) {
                 userToUpdate.setIsActive(updateDto.getIsActive());
             }
@@ -134,12 +142,10 @@ public class UserRegistrationService {
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Users can only update their own basic information
         user.setFullName(updateDto.getFullName());
         user.setPhoneNumber(updateDto.getPhoneNumber());
         user.setNotificationPreferences(updateDto.getNotificationPreferences());
 
-        // Email update requires validation
         if (updateDto.getEmail() != null && !updateDto.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmail(updateDto.getEmail())) {
                 throw new RuntimeException("Email already exists");
@@ -163,9 +169,7 @@ public class UserRegistrationService {
             throw new RuntimeException("User is not a manager");
         }
 
-        // Check if manager has employees
-        List<User> employees = userRepository.findByDepartment(manager.getDepartment())
-                .stream()
+        List<User> employees = userRepository.findByDepartment(manager.getDepartment()).stream()
                 .filter(user -> hasUserRole(user, "EMPLOYEE"))
                 .collect(Collectors.toList());
 
@@ -183,7 +187,6 @@ public class UserRegistrationService {
 
         User manager = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new RuntimeException("Manager not found"));
-
         User employee = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
@@ -191,7 +194,6 @@ public class UserRegistrationService {
             throw new RuntimeException("User is not an employee");
         }
 
-        // Check if employee is in manager's department
         if (!employee.getDepartment().getId().equals(manager.getDepartment().getId())) {
             throw new RuntimeException("Can only delete employees from your own department");
         }
@@ -242,7 +244,7 @@ public class UserRegistrationService {
         return convertToDto(user);
     }
 
-    // Helper methods
+    // ----------------- Helper Methods -----------------
     private User createUser(UserRegistrationDto dto, String roleName, Department department) {
         User user = new User();
         user.setUsername(dto.getUsername());
@@ -254,7 +256,6 @@ public class UserRegistrationService {
         user.setNotificationPreferences(dto.getNotificationPreferences());
         user.setIsActive(true);
 
-        // Set role
         Role role = roleRepository.findByName(roleName)
                 .orElseThrow(() -> new RuntimeException(roleName + " role not found"));
         user.setRoles(Set.of(role));
@@ -271,10 +272,10 @@ public class UserRegistrationService {
         }
     }
 
-    private String generateEmployeeId(String prefix, String departmentCode) {
-        // Generate unique employee ID based on prefix, department and current timestamp
-        long timestamp = System.currentTimeMillis() % 10000;
-        return prefix + "-" + departmentCode + "-" + timestamp;
+    // ✅ Clean Employee ID generation (department-wise sequence)
+    private String generateEmployeeId(String prefix, String departmentCode, Department department) {
+        long count = userRepository.countEmployeesInDepartment(department) + 1;
+        return String.format("%s-%s-%03d", prefix, departmentCode, count);
     }
 
     private boolean hasRole(UserPrincipal userPrincipal, String roleName) {
@@ -288,24 +289,18 @@ public class UserRegistrationService {
     }
 
     private boolean canUpdateUser(UserPrincipal currentUser, User userToUpdate) {
-        // Users can update themselves
         if (currentUser.getId().equals(userToUpdate.getId())) {
             return true;
         }
-
-        // Admins can update managers
         if (hasRole(currentUser, "ADMIN") && hasUserRole(userToUpdate, "MANAGER")) {
             return true;
         }
-
-        // Managers can update employees in their department
         if (hasRole(currentUser, "MANAGER") && hasUserRole(userToUpdate, "EMPLOYEE")) {
             User manager = userRepository.findById(currentUser.getId()).orElse(null);
             if (manager != null && manager.getDepartment() != null) {
                 return manager.getDepartment().getId().equals(userToUpdate.getDepartment().getId());
             }
         }
-
         return false;
     }
 
@@ -332,7 +327,6 @@ public class UserRegistrationService {
                 .map(Role::getName)
                 .collect(Collectors.toSet()));
 
-        // Set manager information for employees
         if (hasUserRole(user, "EMPLOYEE") && user.getDepartment() != null) {
             userRepository.findByDepartment(user.getDepartment()).stream()
                     .filter(u -> hasUserRole(u, "MANAGER"))
