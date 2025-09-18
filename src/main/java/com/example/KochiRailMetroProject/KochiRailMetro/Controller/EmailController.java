@@ -16,7 +16,7 @@ public class EmailController {
         this.emailService = emailService;
     }
 
-    // 1️⃣ Regulatory alert email
+    // Regulatory alert email
     @PostMapping("/regulatory")
     public String sendRegulatoryAlert(@RequestParam String toEmail,
                                       @RequestParam String filename) {
@@ -29,7 +29,7 @@ public class EmailController {
         return "Regulatory Alert Email Sent to " + toEmail;
     }
 
-    // 2️⃣ Critical alert email
+    //  Critical alert email
     @PostMapping("/critical")
     public String sendCriticalAlert(@RequestParam String toEmail,
                                     @RequestParam String title,
@@ -38,7 +38,7 @@ public class EmailController {
         return "Critical Alert Email Sent to " + toEmail;
     }
 
-    // 3️⃣ Deadline reminder email
+    // Deadline reminder email
     @PostMapping("/deadline")
     public String sendDeadlineReminder(@RequestParam String toEmail,
                                        @RequestParam String taskName,

@@ -68,7 +68,6 @@ public class UserRegistrationService {
         return convertToDto(savedUser);
     }
 
-    // Register employee (Manager only)
     @Transactional
     public UserDto registerEmployee(UserRegistrationDto registrationDto, UserPrincipal currentUser) {
         User manager = userRepository.findById(currentUser.getId())
@@ -79,12 +78,6 @@ public class UserRegistrationService {
             throw new RuntimeException("Manager is not assigned to any department");
         }
 
-        // Restrict manager to only their own department
-        if (registrationDto.getDepartmentId() != null &&
-                !registrationDto.getDepartmentId().equals(managerDepartment.getId())) {
-            throw new RuntimeException("Managers can only register employees in their own department");
-        }
-
         User employee = new User();
         employee.setUsername(registrationDto.getUsername());
         employee.setEmail(registrationDto.getEmail());
@@ -92,7 +85,11 @@ public class UserRegistrationService {
         employee.setFullName(registrationDto.getFullName());
         employee.setPhoneNumber(registrationDto.getPhoneNumber());
         employee.setNotificationPreferences(registrationDto.getNotificationPreferences());
-        employee.setIsActive(registrationDto.getIsActive());
+
+        // Default active if not explicitly provided
+        employee.setIsActive(
+                registrationDto.getIsActive() != null ? registrationDto.getIsActive() : true
+        );
 
         // Assign same department as manager
         employee.setDepartment(managerDepartment);
@@ -101,6 +98,7 @@ public class UserRegistrationService {
         String employeeId = generateEmployeeId("EMP", managerDepartment.getCode(), managerDepartment);
         employee.setEmployeeId(employeeId);
 
+        // Assign EMPLOYEE role
         Role employeeRole = roleRepository.findByName("EMPLOYEE")
                 .orElseThrow(() -> new RuntimeException("Role not found"));
         employee.setRoles(Set.of(employeeRole));

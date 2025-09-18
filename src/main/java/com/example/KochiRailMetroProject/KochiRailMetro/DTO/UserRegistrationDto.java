@@ -26,7 +26,6 @@ public class UserRegistrationDto {
     @Pattern(regexp = "^[6-9]\\d{9}$", message = "Please provide a valid 10-digit Indian phone number")
     private String phoneNumber;
 
-    @NotNull(message = "Department ID is required")
     private Long departmentId;
 
     private String notificationPreferences = "EMAIL,SYSTEM";

@@ -5,6 +5,7 @@ import com.example.KochiRailMetroProject.KochiRailMetro.DTO.AuthRequest;
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.AuthResponse;
 import com.example.KochiRailMetroProject.KochiRailMetro.Security.JwtTokenProvider;
 import com.example.KochiRailMetroProject.KochiRailMetro.Security.UserPrincipal;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -49,4 +50,16 @@ public class AuthController {
 
         return ResponseEntity.ok(new ApiResponse<>(true, "Login successful", authResponse));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<String>> logoutUser(HttpServletRequest request) {
+        String token = tokenProvider.getJwtFromRequest(request);
+
+        if (token != null && tokenProvider.validateToken(token)) {
+            tokenProvider.blacklistToken(token);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Logout successful", "Token invalidated"));
+        }
+        return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Invalid token", null));
+    }
+
 }

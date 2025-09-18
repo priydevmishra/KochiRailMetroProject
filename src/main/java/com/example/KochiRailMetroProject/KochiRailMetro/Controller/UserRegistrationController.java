@@ -47,8 +47,17 @@ public class UserRegistrationController {
             @Valid @RequestBody UserRegistrationDto registrationDto,
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
+        // auto-assign departmentId from manager
+        if (registrationDto.getDepartmentId() == null) {
+            registrationDto.setDepartmentId(currentUser.getDepartmentId());
+        }
+
+        // employeeId auto-generate in service (ignore whatever comes from request)
         UserDto createdUser = userRegistrationService.registerEmployee(registrationDto, currentUser);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Employee registered successfully", createdUser));
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Employee registered successfully", createdUser)
+        );
     }
 
     // Get all managers (Admin only)

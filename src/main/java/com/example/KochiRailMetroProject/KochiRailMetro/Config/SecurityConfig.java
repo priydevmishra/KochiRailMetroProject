@@ -38,18 +38,18 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 // Authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ Allow login & registration APIs
+                        // Allow login & registration APIs
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        // ✅ Allow Swagger & API docs
+                        // Allow Swagger & API docs
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // ✅ Allow health check
+                        // Allow health check
                         .requestMatchers("/api/v1/health/**").permitAll()
-                        // ✅ Allow Gmail & email (public APIs you defined)
+                        // Allow Gmail & email (public APIs you defined)
                         .requestMatchers(HttpMethod.POST, "/api/v1/gmail/sync").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/email/**").permitAll()
-                        // ✅ Manager register only by Admin
+                        //  Manager register only by Admin
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/register/manager").hasRole("ADMIN")
-                        // ✅ Employee register only by Manager
+                        //  Employee register only by Manager
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/register/employee").hasRole("MANAGER")
                         // Everything else
                         .anyRequest().authenticated()
