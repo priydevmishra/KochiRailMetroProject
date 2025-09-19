@@ -31,23 +31,10 @@ public class DocumentDto {
     private String title;
     private String description;
 
-    public DocumentDto(Document document) {
-        this.id = document.getId();
-        this.filename = document.getFilename();
-        this.originalFilename = document.getOriginalFilename();
-        this.fileSize = document.getFileSize();
-        this.mimeType = document.getMimeType();
-        this.documentSource = document.getDocumentSource();
-        this.categoryName = (document.getCategory() != null) ? document.getCategory().getName() : null;
-        this.uploadedByName = (document.getUploadedBy() != null) ? document.getUploadedBy().getFullName() : null;
-        this.createdAt = document.getCreatedAt();
-        this.updatedAt = document.getUpdatedAt();
-        this.tags = (document.getTags() != null)
-                ? document.getTags().stream().map(tag -> tag.getName()).collect(Collectors.toSet())
-                : null;
-        this.summary = (document.getContent() != null) ? document.getContent().getSummary() : null;
-        this.mlSummary = (document.getContent() != null) ? document.getContent().getMlSummary() : null;
-        this.processingStatus = (document.getContent() != null) ? document.getContent().getProcessingStatus() : null;
-
-    }
+    // 🔹 New Cloudinary fields
+    private String cloudinaryPublicId;
+    private String cloudinarySecureUrl;
+    private String cloudinaryResourceType;
+    private String fileFormat;
+    private String thumbnailUrl;
 }

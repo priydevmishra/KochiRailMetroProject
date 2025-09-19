@@ -2,6 +2,7 @@ server:
   port: 8090
   servlet:
     context-path: /api
+
 spring:
   application:
     name: kmrl-document-management
@@ -65,6 +66,7 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
   file:
     name: logs/kmrl-document-management.log
+
 google:
   gmail:
     credentials:
@@ -75,7 +77,7 @@ google:
     host: smtp.gmail.com
     port: 587
     username: priydevmishra389@gmail.com   # your Gmail email
-    password: hfvhabuzcjhkybxt           # your App Password
+    password: hfvhabuzcjhkybxt             # your App Password
     protocol: smtp
     properties:
       mail:
@@ -94,3 +96,9 @@ google:
       base-url: http://localhost:8080
   main:
     allow-circular-references: true
+
+# ✅ Cloudinary Configuration
+cloudinary:
+  cloud-name: dyy9gjfpi
+  api-key: 346746662587763
+  api-secret: 6C24bnFGeVlNuFrA7v9rIXJf2zw

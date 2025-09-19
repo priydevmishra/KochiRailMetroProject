@@ -39,6 +39,7 @@ public class SecurityConfig {
                 // Authorization rules
                 .authorizeHttpRequests(auth -> auth
                         // Allow login & registration APIs
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // ye allow karega Cors ko Optionals waala error aayega, nhi to.
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         // Allow Swagger & API docs
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()

@@ -76,6 +76,32 @@ public class Document {
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private Set<Tag> tags = new HashSet<>();
 
+    // 🔹 New Cloudinary-related fields
+    @Column(name = "cloudinary_public_id")
+    private String cloudinaryPublicId;
+
+    @Column(name = "cloudinary_secure_url", length = 500)
+    private String cloudinarySecureUrl;
+
+    @Column(name = "cloudinary_resource_type", length = 50)
+    private String cloudinaryResourceType;
+
+    @Column(name = "file_format", length = 10)
+    private String fileFormat;
+
+    // 🔹 Getters and Setters for new fields
+    public String getCloudinaryPublicId() { return cloudinaryPublicId; }
+    public void setCloudinaryPublicId(String cloudinaryPublicId) { this.cloudinaryPublicId = cloudinaryPublicId; }
+
+    public String getCloudinarySecureUrl() { return cloudinarySecureUrl; }
+    public void setCloudinarySecureUrl(String cloudinarySecureUrl) { this.cloudinarySecureUrl = cloudinarySecureUrl; }
+
+    public String getCloudinaryResourceType() { return cloudinaryResourceType; }
+    public void setCloudinaryResourceType(String cloudinaryResourceType) { this.cloudinaryResourceType = cloudinaryResourceType; }
+
+    public String getFileFormat() { return fileFormat; }
+    public void setFileFormat(String fileFormat) { this.fileFormat = fileFormat; }
+
     public enum DocumentSource {
         GMAIL, WHATSAPP
     }

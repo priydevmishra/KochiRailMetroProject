@@ -18,8 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.security.MessageDigest;
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,30 +28,32 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class DocumentService {
+
     private final DocumentRepository documentRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final TagRepository tagRepository;
-    private final LocalFileStorageService fileStorageService;
     private final DocumentProcessingService documentProcessingService;
     private final AuditService auditService;
+    private final CloudinaryService cloudinaryService;
 
     public DocumentService(DocumentRepository documentRepository,
                            UserRepository userRepository,
                            CategoryRepository categoryRepository,
                            TagRepository tagRepository,
-                           LocalFileStorageService fileStorageService,
                            DocumentProcessingService documentProcessingService,
-                           AuditService auditService) {
+                           AuditService auditService,
+                           CloudinaryService cloudinaryService) {
         this.documentRepository = documentRepository;
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.tagRepository = tagRepository;
-        this.fileStorageService = fileStorageService;
         this.documentProcessingService = documentProcessingService;
         this.auditService = auditService;
+        this.cloudinaryService = cloudinaryService;
     }
 
+    // ✅ Upload document to Cloudinary
     public DocumentDto uploadDocument(MultipartFile file,
                                       Document.DocumentSource source,
                                       Long categoryId,
@@ -61,19 +64,22 @@ public class DocumentService {
             throw new IllegalArgumentException("File is empty");
         }
 
-        // Get user
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Upload to local storage
-        String folder = source.name().toLowerCase();
-        String fileUrl = fileStorageService.uploadFile(file, folder);
+        String folder = "kmrl/" + source.name().toLowerCase();
+        CloudinaryService.CloudinaryResponse cloudinaryResponse = cloudinaryService.uploadFile(file, folder);
 
-        // Create document entity
         Document document = new Document();
         document.setFilename(generateUniqueFilename(file.getOriginalFilename()));
         document.setOriginalFilename(file.getOriginalFilename());
-        document.setCloudUrl(fileUrl); // reused field for local path
+
+        document.setCloudUrl(cloudinaryResponse.getSecureUrl());
+        document.setCloudinaryPublicId(cloudinaryResponse.getPublicId());
+        document.setCloudinarySecureUrl(cloudinaryResponse.getSecureUrl());
+        document.setCloudinaryResourceType(cloudinaryResponse.getResourceType());
+        document.setFileFormat(cloudinaryResponse.getFormat());
+
         document.setFileSize(file.getSize());
         document.setMimeType(file.getContentType());
         document.setDocumentSource(source);
@@ -93,68 +99,17 @@ public class DocumentService {
             document.setTags(tags);
         }
 
-        // Save document
         document = documentRepository.save(document);
 
-        // Trigger async processing
         documentProcessingService.processDocumentAsync(document.getId());
 
-        // Log audit
         auditService.logAction(user.getId(), document.getId(), "DOCUMENT_UPLOADED",
-                "Document uploaded: " + file.getOriginalFilename());
+                "Document uploaded to Cloudinary: " + file.getOriginalFilename());
 
         return convertToDto(document);
     }
 
-    public Page<DocumentDto> searchDocuments(DocumentSearchDto searchDto,
-                                             UserPrincipal currentUser,
-                                             Pageable pageable) {
-
-        Page<Document> documents;
-
-        if (searchDto.getSearchTerm() != null && !searchDto.getSearchTerm().trim().isEmpty()) {
-            documents = documentRepository.searchDocuments(searchDto.getSearchTerm(), pageable);
-        } else if (searchDto.getCategoryId() != null) {
-            documents = documentRepository.findByCategoryId(searchDto.getCategoryId(), pageable);
-        } else if (searchDto.getDocumentSource() != null) {
-            documents = documentRepository.findByDocumentSource(searchDto.getDocumentSource(), pageable);
-        } else if (searchDto.getStartDate() != null && searchDto.getEndDate() != null) {
-            documents = documentRepository.findByDateRange(searchDto.getStartDate(),
-                    searchDto.getEndDate(), pageable);
-        } else {
-            documents = documentRepository.findAllActive(pageable);
-        }
-
-        return documents.map(this::convertToDto);
-    }
-
-    public DocumentDto getDocumentById(Long id, UserPrincipal currentUser) {
-        Document document = documentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Document not found"));
-
-        if (document.getIsDeleted()) {
-            throw new RuntimeException("Document has been deleted");
-        }
-
-        // Log access
-        auditService.logAction(currentUser.getId(), document.getId(), "DOCUMENT_ACCESSED",
-                "Document accessed: " + document.getFilename());
-
-        return convertToDto(document);
-    }
-
-    public void deleteDocument(Long id, UserPrincipal currentUser) {
-        Document document = documentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Document not found"));
-
-        document.setIsDeleted(true);
-        document.setUpdatedAt(LocalDateTime.now());
-        documentRepository.save(document);
-
-        auditService.logAction(currentUser.getId(), document.getId(), "DOCUMENT_DELETED",
-                "Document deleted: " + document.getFilename());
-    }
-
+    // ✅ Download document from Cloudinary
     public byte[] downloadDocument(Long id, UserPrincipal currentUser) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Document not found"));
@@ -167,15 +122,65 @@ public class DocumentService {
                 "Document downloaded: " + document.getFilename());
 
         try {
-            return fileStorageService.downloadFile(document.getCloudUrl());
+            return downloadFromUrl(document.getCloudinarySecureUrl());
         } catch (IOException e) {
-            throw new RuntimeException("Failed to download document", e);
+            throw new RuntimeException("Failed to download document from Cloudinary", e);
         }
     }
 
-    // ✅ New method for GmailService
+    private byte[] downloadFromUrl(String url) throws IOException {
+        try (InputStream in = new URL(url).openStream()) {
+            return in.readAllBytes();
+        }
+    }
+
+    // ✅ For GmailService
     public Optional<Document> findById(Long id) {
         return documentRepository.findById(id);
+    }
+
+    // ✅ NEW: Search documents
+    public Page<DocumentDto> searchDocuments(DocumentSearchDto searchDto, UserPrincipal currentUser, Pageable pageable) {
+        Page<Document> docs;
+
+        if (searchDto.getSearchTerm() != null && !searchDto.getSearchTerm().isEmpty()) {
+            docs = documentRepository.findByFilenameContainingIgnoreCase(searchDto.getSearchTerm(), pageable);
+        } else if (searchDto.getCategoryId() != null) {
+            docs = documentRepository.findByCategory_Id(searchDto.getCategoryId(), pageable);
+        } else if (searchDto.getDocumentSource() != null) {
+            docs = documentRepository.findByDocumentSource(searchDto.getDocumentSource(), pageable);
+        } else {
+            docs = documentRepository.findAll(pageable);
+        }
+
+        return docs.map(this::convertToDto);
+    }
+
+    // ✅ NEW: Get document by ID
+    public DocumentDto getDocumentById(Long id, UserPrincipal currentUser) {
+        Document document = documentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+
+        if (document.getIsDeleted()) {
+            throw new RuntimeException("Document has been deleted");
+        }
+
+        auditService.logAction(currentUser.getId(), document.getId(), "DOCUMENT_VIEWED",
+                "Document viewed: " + document.getFilename());
+
+        return convertToDto(document);
+    }
+
+    // ✅ NEW: Delete document
+    public void deleteDocument(Long id, UserPrincipal currentUser) {
+        Document document = documentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+
+        document.setIsDeleted(true);
+        documentRepository.save(document);
+
+        auditService.logAction(currentUser.getId(), document.getId(), "DOCUMENT_DELETED",
+                "Document deleted: " + document.getFilename());
     }
 
     private String generateUniqueFilename(String originalFilename) {
@@ -214,6 +219,7 @@ public class DocumentService {
                 });
     }
 
+    // ✅ Convert entity → DTO
     private DocumentDto convertToDto(Document document) {
         DocumentDto dto = new DocumentDto();
         dto.setId(document.getId());
@@ -243,6 +249,16 @@ public class DocumentService {
             dto.setSummary(document.getContent().getSummary());
             dto.setMlSummary(document.getContent().getMlSummary());
             dto.setProcessingStatus(document.getContent().getProcessingStatus());
+        }
+
+        dto.setCloudinaryPublicId(document.getCloudinaryPublicId());
+        dto.setCloudinarySecureUrl(document.getCloudinarySecureUrl());
+        dto.setCloudinaryResourceType(document.getCloudinaryResourceType());
+        dto.setFileFormat(document.getFileFormat());
+
+        if (document.getCloudinaryPublicId() != null &&
+                "image".equals(document.getCloudinaryResourceType())) {
+            dto.setThumbnailUrl(cloudinaryService.getThumbnailUrl(document.getCloudinaryPublicId()));
         }
 
         return dto;

@@ -86,7 +86,7 @@ public class DepartmentController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Compliance dashboard retrieved", dashboard));
     }
 
-    // Inner classes for dashboard responses
+    // Inner classes for Avobe dashboard responses
     public static class OperationsDashboard {
         private String message;
         public String getMessage() { return message; }

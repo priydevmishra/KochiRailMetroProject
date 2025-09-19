@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
@@ -20,15 +22,12 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class DocumentProcessingService {
     private final DocumentRepository documentRepository;
-    private final LocalFileStorageService fileStorageService; // UPDATED
     private final MLService mlService;
 
-    // ✅ Updated constructor
+    // ✅ Removed LocalFileStorageService
     public DocumentProcessingService(DocumentRepository documentRepository,
-                                     LocalFileStorageService fileStorageService, // UPDATED
                                      MLService mlService) {
         this.documentRepository = documentRepository;
-        this.fileStorageService = fileStorageService; // UPDATED
         this.mlService = mlService;
     }
 
@@ -44,8 +43,8 @@ public class DocumentProcessingService {
             content.setDocument(document);
             content.setProcessingStatus(DocumentContent.ProcessingStatus.PROCESSING);
 
-            // ✅ Download file from local storage instead of cloud
-            byte[] fileData = fileStorageService.downloadFile(document.getCloudUrl());
+            // ✅ Download file from Cloudinary
+            byte[] fileData = downloadFromCloudinary(document.getCloudinarySecureUrl());
 
             // Extract text based on file type
             String extractedText = extractTextFromFile(fileData, document.getMimeType());
@@ -80,6 +79,13 @@ public class DocumentProcessingService {
         return CompletableFuture.completedFuture(null);
     }
 
+    // ✅ Cloudinary file downloader
+    private byte[] downloadFromCloudinary(String cloudinaryUrl) throws IOException {
+        try (InputStream in = new URL(cloudinaryUrl).openStream()) {
+            return in.readAllBytes();
+        }
+    }
+
     private String extractTextFromFile(byte[] fileData, String mimeType) throws IOException {
         if (mimeType == null) {
             return "";
@@ -88,7 +94,6 @@ public class DocumentProcessingService {
             case "application/pdf":
                 return extractTextFromPdf(fileData);
             case "text/plain":
-                return new String(fileData);
             case "application/json":
                 return new String(fileData);
             default:

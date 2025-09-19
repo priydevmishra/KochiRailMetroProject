@@ -18,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/users")
 @Validated
+@CrossOrigin(origins = "http://localhost:5173")
 public class UserRegistrationController {
 
     private final UserRegistrationService userRegistrationService;
