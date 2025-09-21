@@ -85,11 +85,10 @@ public class EmailInfoDto {
         return isUnread;
     }
 
-    public void setUnread(boolean isUnread) {
-        this.isUnread = isUnread;
+    public void setUnread(boolean unread) {
+        isUnread = unread;
     }
 
-    // Optional: for debugging
     @Override
     public String toString() {
         return "EmailInfoDto{" +

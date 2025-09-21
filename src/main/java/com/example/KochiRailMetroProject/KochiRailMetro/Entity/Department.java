@@ -44,6 +44,16 @@ public class Department {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Parent department (self-referencing relationship)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Department parent;
+
+    // Child departments
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Department> children;
+
+    // Users under this department
     @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<User> users;
 }

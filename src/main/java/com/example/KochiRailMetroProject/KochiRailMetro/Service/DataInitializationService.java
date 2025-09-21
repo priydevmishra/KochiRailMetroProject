@@ -126,18 +126,18 @@ public class DataInitializationService {
                     .orElseThrow(() -> new RuntimeException("Admin role not found"));
 
             User admin = new User();
-            admin.setUsername("admin");
-            admin.setEmail("admin@kmrl.com");
-            admin.setPassword(passwordEncoder.encode("Admin@123"));
+            admin.setUsername("priydev");
+            admin.setEmail("priydev@gmail.com.com");
+            admin.setPassword(passwordEncoder.encode("priydev@123"));
             admin.setFullName("System Administrator");
-            admin.setPhoneNumber("9876543210");
+            admin.setPhoneNumber("6387064864");
             admin.setEmployeeId("ADM-SYS-0001");
             admin.setRoles(Set.of(adminRole));
             admin.setIsActive(true);
             admin.setNotificationPreferences("EMAIL,SYSTEM");
 
             userRepository.save(admin);
-            System.out.println("Default admin created successfully - Username: admin, Password: Admin@123");
+            System.out.println("Default admin created successfully - Username: priydev, Password: priydev@123, mobNo: 6387064864");
         }
     }
 }

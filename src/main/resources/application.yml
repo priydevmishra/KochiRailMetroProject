@@ -1,5 +1,5 @@
 server:
-  port: 8090
+  port: 8091
   servlet:
     context-path: /api
 
@@ -26,12 +26,18 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 
+  http:
+    client:
+      connect-timeout: 30s
+      read-timeout: 60s
+
 task:
   execution:
     pool:
-      core-size: 5
-      max-size: 10
+      core-size: 2
+      max-size: 5
       queue-capacity: 100
+    thread-name-prefix: ai-processing-
 
 # JWT Configuration
 app:
@@ -45,10 +51,17 @@ app:
     max-file-size: 104857600 # 100MB in bytes
     allowed-extensions: pdf,doc,docx,txt,jpg,jpeg,png,gif,xls,xlsx
 
+# AI/ML Service Configuration
+ai:
+  ml:
+    service:
+      url: https://metrixsync-ai-1.onrender.com
+      endpoint: /process-document
+
 # ML Service Configuration (Mock Mode)
 ml:
   service:
-    url: ${ML_SERVICE_URL:http://localhost:5000}
+    url: https://metrixsync-ai-1.onrender.com/process-documents
     api-key: ${ML_API_KEY:your-ml-api-key}
     mock-mode: true
 
@@ -60,8 +73,10 @@ mail:
 logging:
   level:
     com.example.KochiRailMetroProject.KochiRailMetro: DEBUG
+    com.example.KochiRailMetroProject.KochiRailMetro.Service.AIDocumentService: INFO
     org.springframework.security: WARN
     org.hibernate.SQL: DEBUG
+    root: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
   file:
@@ -97,7 +112,7 @@ google:
   main:
     allow-circular-references: true
 
-# ✅ Cloudinary Configuration
+# Cloudinary Configuration
 cloudinary:
   cloud-name: dyy9gjfpi
   api-key: 346746662587763
