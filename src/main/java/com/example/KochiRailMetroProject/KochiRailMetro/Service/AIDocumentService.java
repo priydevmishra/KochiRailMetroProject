@@ -3,6 +3,7 @@ package com.example.KochiRailMetroProject.KochiRailMetro.Service;
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.AIDocumentRequestDto;
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.AIDocumentResponseDto;
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.AIProcessingResultDto;
+import com.example.KochiRailMetroProject.KochiRailMetro.DTO.DocumentStatusDto;
 import com.example.KochiRailMetroProject.KochiRailMetro.Entity.*;
 import com.example.KochiRailMetroProject.KochiRailMetro.Repository.DocumentRepository;
 import com.example.KochiRailMetroProject.KochiRailMetro.Repository.DocumentWorkflowRepository;
@@ -24,6 +25,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -65,6 +68,37 @@ public class AIDocumentService {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
     }
+
+    public List<DocumentStatusDto> getAllDocumentsStatus() {
+        List<Document> documents = documentRepository.findAll();
+        List<DocumentStatusDto> result = new ArrayList<>();
+
+        for (Document doc : documents) {
+            DocumentStatusDto dto = new DocumentStatusDto();
+            dto.setDocumentId(doc.getId());
+
+            if (doc.getContent() != null &&
+                    doc.getContent().getMlSummary() != null &&
+                    !doc.getContent().getMlSummary().startsWith("Error:")) {
+
+                dto.setDepartment(doc.getContent().getDepartment());
+                dto.setPriority(doc.getContent().getPriority());
+                dto.setSummary(doc.getContent().getMlSummary());
+                dto.setDeadline(doc.getContent().getDeadline() != null
+                        ? doc.getContent().getDeadline().toString()
+                        : null);
+                dto.setMlProcessingStatus(doc.getContent().getProcessingStatus().name());
+                dto.setStatus("PROCESSED");
+
+            } else {
+                dto.setStatus("NOT_PROCESSED");
+                dto.setMlProcessingStatus("PENDING");
+            }
+            result.add(dto);
+        }
+        return result;
+    }
+
 
     /**
      * Send document to AI service for processing

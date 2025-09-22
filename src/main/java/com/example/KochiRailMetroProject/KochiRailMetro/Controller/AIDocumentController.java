@@ -2,6 +2,7 @@ package com.example.KochiRailMetroProject.KochiRailMetro.Controller;
 
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.*;
 import com.example.KochiRailMetroProject.KochiRailMetro.Entity.Document;
+import com.example.KochiRailMetroProject.KochiRailMetro.Entity.DocumentContent;
 import com.example.KochiRailMetroProject.KochiRailMetro.Repository.DocumentRepository;
 import com.example.KochiRailMetroProject.KochiRailMetro.Security.UserPrincipal;
 import com.example.KochiRailMetroProject.KochiRailMetro.Service.AIDocumentService;
@@ -28,6 +29,20 @@ public class AIDocumentController {
         this.aiDocumentService = aiDocumentService;
         this.documentRepository = documentRepository;
     }
+
+    @GetMapping("/all-documents")
+    public ResponseEntity<ApiResponse<List<DocumentStatusDto>>> getAllDocuments(
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        try {
+            List<DocumentStatusDto> docs = aiDocumentService.getAllDocumentsStatus();
+            return ResponseEntity.ok(new ApiResponse<>(true, "Fetched all documents", docs));
+        } catch (Exception e) {
+            logger.error("Error fetching documents: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Failed to fetch documents: " + e.getMessage()));
+        }
+    }
+
 
     /**
      * Process single document with AI
@@ -134,23 +149,27 @@ public class AIDocumentController {
     /**
      * Get AI processing statistics
      */
-    @GetMapping("/stats")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getAIStats(
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+//    @GetMapping("/stats")
+//    public ResponseEntity<ApiResponse<Map<String, Object>>> getAIStats(
+//            @AuthenticationPrincipal UserPrincipal currentUser) {
+//        try {
+//            long totalProcessed = documentRepository.countByContent_ProcessingStatus(DocumentContent.ProcessingStatus.COMPLETED);
+//            long pendingProcessing = documentRepository.countByContent_ProcessingStatus(DocumentContent.ProcessingStatus.PENDING);
+//            long failedProcessing = documentRepository.countByContent_ProcessingStatus(DocumentContent.ProcessingStatus.FAILED);
+//
+//            Map<String, Object> stats = Map.of(
+//                    "totalProcessed", totalProcessed,
+//                    "pendingProcessing", pendingProcessing,
+//                    "failedProcessing", failedProcessing
+//            );
+//
+//            return ResponseEntity.ok(new ApiResponse<>(true,
+//                    "AI processing statistics retrieved", stats));
+//        } catch (Exception e) {
+//            logger.error("Error retrieving AI stats: {}", e.getMessage(), e);
+//            return ResponseEntity.badRequest()
+//                    .body(new ApiResponse<>(false, "Failed to retrieve AI statistics: " + e.getMessage()));
+//        }
+//    }
 
-        try {
-            Map<String, Object> stats = Map.of(
-                    "message", "AI statistics endpoint - implement based on requirements",
-                    "totalProcessed", 0,
-                    "pendingProcessing", 0,
-                    "failedProcessing", 0
-            );
-
-            return ResponseEntity.ok(new ApiResponse<>(true, "AI processing statistics retrieved", stats));
-        } catch (Exception e) {
-            logger.error("Error retrieving AI stats: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, "Failed to retrieve AI statistics: " + e.getMessage()));
-        }
-    }
 }

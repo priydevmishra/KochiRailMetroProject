@@ -41,6 +41,16 @@ public class DocumentContent {
     @Column(name = "processing_status", length = 20)
     private ProcessingStatus processingStatus = ProcessingStatus.PENDING;
 
+    // ✅ Newly added fields
+    @Column(name = "department", length = 100)
+    private String department;
+
+    @Column(name = "priority", length = 50)
+    private String priority;
+
+    @Column(name = "deadline")
+    private LocalDateTime deadline;
+
     public enum ProcessingStatus {
         PENDING, PROCESSING, COMPLETED, FAILED
     }
