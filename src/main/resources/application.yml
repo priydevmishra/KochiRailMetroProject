@@ -6,26 +6,22 @@ server:
 spring:
   application:
     name: kmrl-document-management
-
   datasource:
-    url: jdbc:mysql://localhost:3306/kmrl_project
+    url: jdbc:mysql://localhost:3306/kmrl
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: Amaronki123qwe@
-
   jpa:
     hibernate:
-      ddl-auto: update   # Dev me update, prod me validate
+      ddl-auto: update   # Dev = update, Prod = validate
     show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
-
   servlet:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
-
   http:
     client:
       connect-timeout: 30s
@@ -44,11 +40,12 @@ app:
   jwtSecret: ${JWT_SECRET:mySecretKey123456789mySecretKey123456789}
   jwtExpirationInMs: 86400000
   base-url: ${BASE_URL:http://localhost:8080}
-
-  # Local File Storage Configuration
+  mail:
+    from: metrixsync454@gmail.com
+    base-url: http://localhost:8080
   file-storage:
     base-path: ./uploads
-    max-file-size: 104857600 # 100MB in bytes
+    max-file-size: 104857600   # 100MB in bytes
     allowed-extensions: pdf,doc,docx,txt,jpg,jpeg,png,gif,xls,xlsx
 
 # AI/ML Service Configuration
@@ -58,16 +55,11 @@ ai:
       url: https://metrixsync-ai-1.onrender.com
       endpoint: /process-document
 
-# ML Service Configuration (Mock Mode)
 ml:
   service:
     url: https://metrixsync-ai-1.onrender.com/process-documents
     api-key: ${ML_API_KEY:your-ml-api-key}
     mock-mode: true
-
-# Email Service (Mock Mode)
-mail:
-  debug-mode: true
 
 # Logging Configuration
 logging:
@@ -82,35 +74,34 @@ logging:
   file:
     name: logs/kmrl-document-management.log
 
+# Gmail Configuration
 google:
   gmail:
     credentials:
       file: "C:/Users/PRIYD/Documents/SpringBoot Practice/KochiRailMetro/credentials/gmail-credentials.json"
     user:
-      email: "priydevmishra389@gmail.com"
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: priydevmishra389@gmail.com   # your Gmail email
-    password: hfvhabuzcjhkybxt             # your App Password
-    protocol: smtp
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
-    test-connection: true
+      email: "metrixsync454@gmail.com"
 
-  app:
+mail:
+  debug-mode: true
+  host: smtp.gmail.com
+  port: 587
+  username: metrixsync454@gmail.com
+  password: slckphyqlresrgss
+  protocol: smtp
+  properties:
     mail:
-      from: priydevmishra389@gmail.com      # sender email
-      base-url: http://localhost:8080
-  main:
-    allow-circular-references: true
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+        connectiontimeout: 5000
+        timeout: 5000
+        writetimeout: 5000
+  test-connection: true
+
+main:
+  allow-circular-references: true
 
 # Cloudinary Configuration
 cloudinary:

@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
-@RequestMapping("/api/v1/ai")
+@RequestMapping("/api/v1/ai")    // Ye Parent API HAi
 public class AIDocumentController {
 
     private static final Logger logger = LoggerFactory.getLogger(AIDocumentController.class);
@@ -30,6 +30,7 @@ public class AIDocumentController {
         this.documentRepository = documentRepository;
     }
 
+    // Iss API kaa use hum sabhi processed and unprocessed ko fetch karne me karenge
     @GetMapping("/all-documents")
     public ResponseEntity<ApiResponse<List<DocumentStatusDto>>> getAllDocuments(
             @AuthenticationPrincipal UserPrincipal currentUser) {
@@ -43,10 +44,7 @@ public class AIDocumentController {
         }
     }
 
-
-    /**
-     * Process single document with AI
-     */
+    // Iss api kaa use ek document ko ai se process karWane ke liye karenge
     @PostMapping("/process-document/{documentId}")
     public ResponseEntity<ApiResponse<AIProcessingResultDto>> processDocument(
             @PathVariable Long documentId,
@@ -72,9 +70,7 @@ public class AIDocumentController {
         }
     }
 
-    /**
-     * Process multiple documents with AI (async)
-     */
+    // Iss api kaa use multiple document ko ai se process karWane ke liye karenge
     @PostMapping("/process-documents")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> processMultipleDocuments(
             @RequestBody BulkAIProcessingRequestDto requestDto,
@@ -123,9 +119,7 @@ public class AIDocumentController {
         );
     }
 
-    /**
-     * Check if document has been processed by AI
-     */
+    // isse check karenge ki processed hai yaa unprocessed, extra API Bnaa di hai but bnaane ki need nhi hai.
     @GetMapping("/check-status/{documentId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkProcessingStatus(
             @PathVariable Long documentId,
@@ -147,7 +141,7 @@ public class AIDocumentController {
     }
 
     /**
-     * Get AI processing statistics
+     * Get AI processing statistics,  Ye code abhi comment rakha hai, isliye iski kuch testing nhi karna. ye api use me nhi hai.
      */
 //    @GetMapping("/stats")
 //    public ResponseEntity<ApiResponse<Map<String, Object>>> getAIStats(

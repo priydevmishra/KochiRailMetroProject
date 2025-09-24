@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/api/v1/email")
+@RequestMapping("/api/v1/email")  // isko pehle regulatory, critical aur deadline ke hisaab se banaaya tha but shovansh ne baad me iskaa use nhi kiyaa, but word file me iski saari api likhna, GPT pe iski controller aur service layer ko daalke use pooch ke likh lena.
 public class EmailController {
 
     private final EmailService emailService;

@@ -27,6 +27,7 @@ public class DepartmentController {
         this.documentService = documentService;
     }
 
+    // iss parent api kaa use agar get request fek ke kare to saare department milenge
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
     public ResponseEntity<ApiResponse<List<DepartmentDto>>> getAllDepartments() {
@@ -34,12 +35,14 @@ public class DepartmentController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Departments retrieved successfully", departments));
     }
 
+    // department ki id se department fetch karne ke liye
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<DepartmentDto>> getDepartment(@PathVariable Long id) {
         DepartmentDto department = departmentService.getDepartmentById(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "Department retrieved successfully", department));
     }
 
+    // uper waali parent api par agar hum post request maarenge to new department create ho jaayega, Ridam tum iski Request body dekh lena, Gpt yaa kahi se may be iski service layer kaa code bhi maange
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<DepartmentDto>> createDepartment(@RequestBody DepartmentDto departmentDto) {
@@ -52,6 +55,7 @@ public class DepartmentController {
         }
     }
 
+    // neeche teen api hain, indivisual department ko get karne ke liye
     @GetMapping("/operations/dashboard")
     public ResponseEntity<ApiResponse<OperationsDashboard>> getOperationsDashboard(
             @AuthenticationPrincipal UserPrincipal currentUser) {
@@ -86,7 +90,7 @@ public class DepartmentController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Compliance dashboard retrieved", dashboard));
     }
 
-    // Inner classes for Avobe dashboard responses
+    // Ye Inner classes hain for Avobe dashboard responses
     public static class OperationsDashboard {
         private String message;
         public String getMessage() { return message; }

@@ -28,6 +28,7 @@ public class AuthController {
         this.tokenProvider = tokenProvider;
     }
 
+    // iss api ki help se login karenge
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> authenticateUser(@Valid @RequestBody AuthRequest loginRequest) {
 
@@ -52,6 +53,7 @@ public class AuthController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Login successful", authResponse));
     }
 
+    // iss api ki help se logout karenge
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<String>> logoutUser(HttpServletRequest request) {
         String token = tokenProvider.getJwtFromRequest(request);

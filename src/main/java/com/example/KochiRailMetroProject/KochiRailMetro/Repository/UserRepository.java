@@ -13,31 +13,54 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    // ---------------- Basic finders ----------------
     Optional<User> findByUsername(String username);
-
     Optional<User> findByEmail(String email);
-
     Boolean existsByUsername(String username);
-
     Boolean existsByEmail(String email);
 
-    // 🔹 Fetch users by department (only active users)
-    @Query("SELECT u FROM User u WHERE u.isActive = true AND u.department = ?1")
-    List<User> findByDepartment(Department department);
+    // ---------------- Department-based queries ----------------
+    // Active users in a department
+    @Query("SELECT u FROM User u WHERE u.isActive = true AND u.department = :department")
+    List<User> findByDepartment(@Param("department") Department department);
 
-    // 🔹 Fetch users by department code
-    @Query("SELECT u FROM User u WHERE u.department.code = ?1")
-    List<User> findByDepartmentCode(String departmentCode);
+    // Users by department code (all users, active or not)
+    @Query("SELECT u FROM User u WHERE u.department.code = :departmentCode")
+    List<User> findByDepartmentCode(@Param("departmentCode") String departmentCode);
 
-    // 🔹 Count employees in department
-    @Query("SELECT COUNT(u) FROM User u JOIN u.roles r " +
-            "WHERE u.department = :department AND r.name = 'EMPLOYEE'")
+    // Count employees in a department
+    @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE u.department = :department AND r.name = 'EMPLOYEE'")
     long countEmployeesInDepartment(@Param("department") Department department);
 
-    // 🔹 New queries to fetch user along with department (for authentication)
+    // ---------------- Fetch with department ----------------
+    // Fetch user with department by username
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.department WHERE u.username = :username")
     Optional<User> findByUsernameWithDepartment(@Param("username") String username);
 
+    // Fetch user with department by id
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.department WHERE u.id = :id")
     Optional<User> findByIdWithDepartment(@Param("id") Long id);
+
+    // ---------------- Manager-specific queries ----------------
+    // Find first manager in a department by department code
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'MANAGER' AND u.department.code = :code")
+    Optional<User> findFirstManagerByDepartmentCode(@Param("code") String code);
+
+    // All managers
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'MANAGER'")
+    List<User> findAllManagers();
+
+    // All employees
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'EMPLOYEE'")
+    List<User> findAllEmployees();
+
+    // Employees by department
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = 'EMPLOYEE' AND u.department = :department")
+    List<User> findEmployeesByDepartment(@Param("department") Department department);
+
+    // ---------------- Optional helper queries ----------------
+    // Find user by username and department (optional)
+    @Query("SELECT u FROM User u WHERE u.username = :username AND u.department = :department")
+    Optional<User> findByUsernameAndDepartment(@Param("username") String username, @Param("department") Department department);
+
 }

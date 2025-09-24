@@ -12,10 +12,7 @@ import java.util.Optional;
 @Repository
 public interface DepartmentRepository extends JpaRepository<Department, Long> {
 
-    // --- Existing methods ---
-    @Query("SELECT d FROM Department d WHERE d.code = :code")
-    Optional<Department> findByCode(@Param("code") String code);
-
+    Optional<Department> findByCode(String code);
     Optional<Department> findByName(String name);
 
     @Query("SELECT d FROM Department d WHERE d.notificationEnabled = true")
@@ -23,7 +20,6 @@ public interface DepartmentRepository extends JpaRepository<Department, Long> {
 
     Boolean existsByCode(String code);
 
-    // --- New methods ---
     List<Department> findByParentIsNull();
     List<Department> findByParentId(Long parentId);
 

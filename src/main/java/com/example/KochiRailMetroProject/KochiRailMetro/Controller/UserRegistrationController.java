@@ -16,7 +16,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/api/v1/users") // Manager, Employees etc ko register aur related work ke liye
 @Validated
 @CrossOrigin(origins = "http://localhost:5173")
 public class UserRegistrationController {
@@ -30,7 +30,7 @@ public class UserRegistrationController {
         this.departmentService = departmentService;
     }
 
-    // 🔹 Admin can register Managers (Admin chooses Department from dropdown)
+    // Admin can register Managers (Admin chooses Department from dropdown)
     @PostMapping("/register/manager")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserDto>> registerManager(
@@ -41,7 +41,7 @@ public class UserRegistrationController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Manager registered successfully", createdUser));
     }
 
-    // 🔹 Manager can register Employees (EmployeeId auto-generated, Dept auto-mapped)
+    // Manager can register Employees (EmployeeId auto-generated, Dept auto-mapped)
     @PostMapping("/register/employee")
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<ApiResponse<UserDto>> registerEmployee(

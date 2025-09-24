@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/cloudinary")
+@RequestMapping("/api/v1/cloudinary")  // ye cloudinary ki api hain, inko abhi test mat karna, but docs me likh lena ki ye api hain, is file ke andar
 public class CloudinaryController {
 
     private final CloudinaryService cloudinaryService;

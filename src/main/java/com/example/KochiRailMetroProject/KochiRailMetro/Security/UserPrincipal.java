@@ -14,7 +14,7 @@ public class UserPrincipal implements UserDetails {
     private final String username;
     private final String email;
     private final String password;
-    private final Long departmentId;  // ✅ Add departmentId
+    private final Long departmentId;  // Add departmentId
     private final Collection<? extends GrantedAuthority> authorities;
 
     public UserPrincipal(Long id, String username, String email, String password,
@@ -37,7 +37,7 @@ public class UserPrincipal implements UserDetails {
                 user.getUsername(),
                 user.getEmail(),
                 user.getPassword(),
-                user.getDepartment() != null ? user.getDepartment().getId() : null, // ✅ map departmentId
+                user.getDepartment() != null ? user.getDepartment().getId() : null, // map departmentId
                 authorities
         );
     }
@@ -46,7 +46,7 @@ public class UserPrincipal implements UserDetails {
 
     public String getEmail() { return email; }
 
-    public Long getDepartmentId() { return departmentId; }  // ✅ Getter
+    public Long getDepartmentId() { return departmentId; }  // Getter
 
     @Override
     public String getUsername() { return username; }

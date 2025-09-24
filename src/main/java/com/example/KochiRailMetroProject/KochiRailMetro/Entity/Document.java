@@ -1,5 +1,6 @@
 package com.example.KochiRailMetroProject.KochiRailMetro.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,11 +13,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name="documents")
+@Table(name = "documents")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Document {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -42,11 +45,18 @@ public class Document {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Category category;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uploaded_by")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "roles", "department"})
     private User uploadedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "users", "children", "parent"})
+    private Department department;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -65,18 +75,17 @@ public class Document {
     private Integer version = 1;
 
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Set<DocumentMetadata> metadata = new HashSet<>();
 
     @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private DocumentContent content;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "document_tags",
-            joinColumns = @JoinColumn(name = "document_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Set<Tag> tags = new HashSet<>();
 
-    // 🔹 New Cloudinary-related fields
     @Column(name = "cloudinary_public_id")
     private String cloudinaryPublicId;
 
@@ -88,19 +97,6 @@ public class Document {
 
     @Column(name = "file_format", length = 10)
     private String fileFormat;
-
-    // 🔹 Getters and Setters for new fields
-    public String getCloudinaryPublicId() { return cloudinaryPublicId; }
-    public void setCloudinaryPublicId(String cloudinaryPublicId) { this.cloudinaryPublicId = cloudinaryPublicId; }
-
-    public String getCloudinarySecureUrl() { return cloudinarySecureUrl; }
-    public void setCloudinarySecureUrl(String cloudinarySecureUrl) { this.cloudinarySecureUrl = cloudinarySecureUrl; }
-
-    public String getCloudinaryResourceType() { return cloudinaryResourceType; }
-    public void setCloudinaryResourceType(String cloudinaryResourceType) { this.cloudinaryResourceType = cloudinaryResourceType; }
-
-    public String getFileFormat() { return fileFormat; }
-    public void setFileFormat(String fileFormat) { this.fileFormat = fileFormat; }
 
     public enum DocumentSource {
         GMAIL, WHATSAPP

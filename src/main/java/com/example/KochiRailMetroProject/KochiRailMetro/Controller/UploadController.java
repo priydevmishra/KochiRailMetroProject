@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/files")
+@RequestMapping("/api/v1/files")  // Ye bhi future me use karenge, working GPT se pooch ke word file me likh lenaa..
 public class UploadController {
 
     private final CloudStorageService cloudStorageService;

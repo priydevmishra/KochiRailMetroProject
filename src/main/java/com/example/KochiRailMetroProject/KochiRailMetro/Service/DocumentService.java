@@ -53,7 +53,7 @@ public class DocumentService {
         this.cloudinaryService = cloudinaryService;
     }
 
-    // ✅ Upload document to Cloudinary
+    // Upload document to Cloudinary
     public DocumentDto uploadDocument(MultipartFile file,
                                       Document.DocumentSource source,
                                       Long categoryId,
@@ -109,7 +109,7 @@ public class DocumentService {
         return convertToDto(document);
     }
 
-    // ✅ Download document from Cloudinary
+    // Download document from Cloudinary
     public byte[] downloadDocument(Long id, UserPrincipal currentUser) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Document not found"));
@@ -134,12 +134,12 @@ public class DocumentService {
         }
     }
 
-    // ✅ For GmailService
+    // For GmailService
     public Optional<Document> findById(Long id) {
         return documentRepository.findById(id);
     }
 
-    // ✅ NEW: Search documents
+    // NEW: Search documents
     public Page<DocumentDto> searchDocuments(DocumentSearchDto searchDto, UserPrincipal currentUser, Pageable pageable) {
         Page<Document> docs;
 
@@ -156,7 +156,7 @@ public class DocumentService {
         return docs.map(this::convertToDto);
     }
 
-    // ✅ NEW: Get document by ID
+    // NEW: Get document by ID
     public DocumentDto getDocumentById(Long id, UserPrincipal currentUser) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Document not found"));
@@ -171,7 +171,7 @@ public class DocumentService {
         return convertToDto(document);
     }
 
-    // ✅ NEW: Delete document
+    // NEW: Delete document
     public void deleteDocument(Long id, UserPrincipal currentUser) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Document not found"));
@@ -219,7 +219,7 @@ public class DocumentService {
                 });
     }
 
-    // ✅ Convert entity → DTO
+    // Convert entity → DTO
     private DocumentDto convertToDto(Document document) {
         DocumentDto dto = new DocumentDto();
         dto.setId(document.getId());

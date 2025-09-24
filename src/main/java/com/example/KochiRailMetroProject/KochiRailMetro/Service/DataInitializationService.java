@@ -127,7 +127,7 @@ public class DataInitializationService {
 
             User admin = new User();
             admin.setUsername("priydev");
-            admin.setEmail("priydev@gmail.com.com");
+            admin.setEmail("priydevmishra389@gmail.com");
             admin.setPassword(passwordEncoder.encode("priydev@123"));
             admin.setFullName("System Administrator");
             admin.setPhoneNumber("6387064864");

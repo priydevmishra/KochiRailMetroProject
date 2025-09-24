@@ -69,6 +69,7 @@ public class AIDocumentService {
         this.objectMapper = objectMapper;
     }
 
+    // ye EndPoint sabhi Documents ko fetch karne ke liye banaaya hai,( processed + non processed)
     public List<DocumentStatusDto> getAllDocumentsStatus() {
         List<Document> documents = documentRepository.findAll();
         List<DocumentStatusDto> result = new ArrayList<>();
@@ -77,32 +78,28 @@ public class AIDocumentService {
             DocumentStatusDto dto = new DocumentStatusDto();
             dto.setDocumentId(doc.getId());
 
-            if (doc.getContent() != null &&
-                    doc.getContent().getMlSummary() != null &&
-                    !doc.getContent().getMlSummary().startsWith("Error:")) {
+            DocumentContent content = doc.getContent();
+            if (content != null) {
+                dto.setDepartment(content.getDepartment());
+                dto.setPriority(content.getPriority());
+                dto.setSummary(content.getMlSummary());
+                dto.setDeadline(content.getDeadline() != null ? content.getDeadline().toString() : null);
+                dto.setMlProcessingStatus(content.getProcessingStatus().name());
 
-                dto.setDepartment(doc.getContent().getDepartment());
-                dto.setPriority(doc.getContent().getPriority());
-                dto.setSummary(doc.getContent().getMlSummary());
-                dto.setDeadline(doc.getContent().getDeadline() != null
-                        ? doc.getContent().getDeadline().toString()
-                        : null);
-                dto.setMlProcessingStatus(doc.getContent().getProcessingStatus().name());
-                dto.setStatus("PROCESSED");
-
+                dto.setStatus(content.getProcessingStatus() == DocumentContent.ProcessingStatus.COMPLETED
+                        ? "PROCESSED"
+                        : "NOT_PROCESSED");
             } else {
                 dto.setStatus("NOT_PROCESSED");
                 dto.setMlProcessingStatus("PENDING");
             }
+
             result.add(dto);
         }
         return result;
     }
 
-
-    /**
-     * Send document to AI service for processing
-     */
+    // Ek document ko AI se processed karaane ke liye banaaya hai iss method ko
     public AIProcessingResultDto processDocumentWithAI(Long documentId, UserPrincipal currentUser) {
         logger.info("Starting AI processing for document ID: {} by user: {}", documentId, currentUser.getId());
 
@@ -149,9 +146,7 @@ public class AIDocumentService {
         }
     }
 
-    /**
-     * Async version for bulk processing
-     */
+    // Agar mass me ai se processing karaani ho to iss method kaa use karna hai
     @Async
     public CompletableFuture<AIProcessingResultDto> processDocumentWithAIAsync(Long documentId, UserPrincipal currentUser) {
         try {
@@ -164,6 +159,7 @@ public class AIDocumentService {
         }
     }
 
+    // AI ko request bhejne ke liye processing ki
     private AIDocumentRequestDto createAIRequest(Document document) {
         AIDocumentRequestDto request = new AIDocumentRequestDto();
         request.setDocumentId(String.valueOf(document.getId()));
@@ -248,10 +244,39 @@ public class AIDocumentService {
         content.setProcessingStatus(DocumentContent.ProcessingStatus.COMPLETED);
         content.setProcessedAt(LocalDateTime.now());
 
-        // Save the document with updated content
+        // Save department and priority in DocumentContent
+        content.setDepartment(aiResponse.getDepartment());
+        content.setPriority(aiResponse.getPriority());
+
+        // Save deadline if parsable
+        LocalDate deadline = parseDeadline(aiResponse.getDeadline());
+        if (deadline != null) {
+            content.setDeadline(deadline.atStartOfDay());
+        }
+
+        // FIX: Properly set Department entity from DB
+        if (aiResponse.getDepartment() != null) {
+            departmentRepository.findByNameIgnoreCase(aiResponse.getDepartment())
+                    .ifPresentOrElse(
+                            document::setDepartment,
+                            () -> {
+                                // If department not found, log warning karega
+                                logger.warn("Department '{}' not found in DB, skipping assignment", aiResponse.getDepartment());
+                            }
+                    );
+        }
+
+        // Save the document with updated content + department
         documentRepository.save(document);
-        logger.info("Updated document {} with AI summary", document.getId());
+
+        logger.info("Updated document {} with AI summary, department={}, priority={}, deadline={}",
+                document.getId(),
+                (document.getDepartment() != null ? document.getDepartment().getName() : "NULL"),
+                content.getPriority(),
+                content.getDeadline());
     }
+
+
 
     private void createWorkflowFromAIResponse(Document document, AIDocumentResponseDto aiResponse, UserPrincipal currentUser) {
         try {

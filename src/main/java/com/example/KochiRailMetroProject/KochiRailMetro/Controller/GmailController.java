@@ -2,7 +2,7 @@ package com.example.KochiRailMetroProject.KochiRailMetro.Controller;
 
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.ApiResponse;
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.DocumentDto;
-import com.example.KochiRailMetroProject.KochiRailMetro.DTO.GmailInboxDto;
+import com.example.KochiRailMetroProject.KochiRailMetro.DTO.GmailSyncStatusDto;
 import com.example.KochiRailMetroProject.KochiRailMetro.Security.UserPrincipal;
 import com.example.KochiRailMetroProject.KochiRailMetro.Service.GmailService;
 import org.springframework.http.ResponseEntity;
@@ -10,10 +10,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/gmail")
+@RequestMapping("/api/v1/gmail") // gmail injestion ke liye API hai..
 public class GmailController {
 
     private final GmailService gmailService;
@@ -22,62 +21,31 @@ public class GmailController {
         this.gmailService = gmailService;
     }
 
-    // Sync only text emails (no attachments)
+    // Single unified sync endpoint - syncs all new emails with attachments, is api se saare mail sync hoke DB me store ho jaayenge
     @PostMapping("/sync")
-    public ResponseEntity<ApiResponse<List<DocumentDto>>> syncGmailEmails(
-            @RequestParam(value = "maxResults", defaultValue = "10") int maxResults,
+    public ResponseEntity<ApiResponse<List<DocumentDto>>> syncNewEmails(
             @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
-            List<DocumentDto> documents = gmailService.syncEmailsOnly(currentUser, maxResults);
+            List<DocumentDto> documents = gmailService.syncNewEmails(currentUser);
             return ResponseEntity.ok(new ApiResponse<>(true,
-                    "Gmail emails synced successfully. " + documents.size() + " emails processed.", documents));
+                    "Gmail sync completed successfully. " + documents.size() + " new items processed.", documents));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(false, "Failed to sync Gmail emails: " + e.getMessage()));
         }
     }
 
-    // Sync only attachments from emails (including email text + all attachments)
-    @PostMapping("/sync-attachments")
-    public ResponseEntity<ApiResponse<List<DocumentDto>>> syncEmailAttachments(
-            @RequestParam(value = "maxResults", defaultValue = "10") int maxResults,
+    // Get count of new unsync emails, kitne unsync emails hain, uskaa count btaayega...
+    @GetMapping("/unsynced-count")
+    public ResponseEntity<ApiResponse<GmailSyncStatusDto>> getUnsyncedEmailsCount(
             @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
-            List<DocumentDto> documents = gmailService.syncEmailsWithAttachments(currentUser, maxResults);
+            GmailSyncStatusDto syncStatus = gmailService.getUnsyncedEmailsCount(currentUser);
             return ResponseEntity.ok(new ApiResponse<>(true,
-                    "Gmail emails with attachments synced successfully. " + documents.size() + " items processed.", documents));
+                    "Unsynced emails count retrieved successfully", syncStatus));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, "Failed to sync Gmail attachments: " + e.getMessage()));
-        }
-    }
-
-    // Fetch inbox information without syncing
-    @GetMapping("/inbox")
-    public ResponseEntity<ApiResponse<GmailInboxDto>> getInboxInfo(
-            @RequestParam(value = "maxResults", defaultValue = "10") int maxResults,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            GmailInboxDto inboxInfo = gmailService.getInboxInfo(currentUser, maxResults);
-            return ResponseEntity.ok(new ApiResponse<>(true,
-                    "Inbox information fetched successfully", inboxInfo));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, "Failed to fetch inbox: " + e.getMessage()));
-        }
-    }
-
-    // Get unread message count
-    @GetMapping("/unread-count")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getUnreadCount(
-            @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            Map<String, Object> unreadInfo = gmailService.getUnreadMessageCount(currentUser);
-            return ResponseEntity.ok(new ApiResponse<>(true,
-                    "Unread count fetched successfully", unreadInfo));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, "Failed to fetch unread count: " + e.getMessage()));
+                    .body(new ApiResponse<>(false, "Failed to get unsynced count: " + e.getMessage()));
         }
     }
 }

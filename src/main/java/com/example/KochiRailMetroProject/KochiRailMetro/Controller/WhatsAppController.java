@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/api/v1/whatsapp")
+@RequestMapping("/api/v1/whatsapp") //abhi whats app injestion second phase me karenge... APIs likh ke GPT se layers bhejkar likh lena kaise working hai..
 public class WhatsAppController {
 
     private final WhatsAppService whatsAppService;

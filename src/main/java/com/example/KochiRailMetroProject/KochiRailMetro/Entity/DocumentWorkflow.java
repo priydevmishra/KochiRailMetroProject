@@ -1,11 +1,13 @@
 package com.example.KochiRailMetroProject.KochiRailMetro.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -13,13 +15,16 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class DocumentWorkflow {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
     @JoinColumn(name = "document_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "content", "metadata", "tags"})
     private Document document;
 
     @Enumerated(EnumType.STRING)
@@ -32,10 +37,17 @@ public class DocumentWorkflow {
 
     @ManyToOne
     @JoinColumn(name = "assigned_to")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "roles", "department"})
     private User assignedTo;
 
     @ManyToOne
+    @JoinColumn(name = "assigned_by")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "roles", "department"})
+    private User assignedBy;
+
+    @ManyToOne
     @JoinColumn(name = "created_by")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "roles", "department"})
     private User createdBy;
 
     @Column(name = "deadline")
@@ -48,7 +60,7 @@ public class DocumentWorkflow {
     private String comments;
 
     @CreationTimestamp
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
@@ -74,4 +86,3 @@ public class DocumentWorkflow {
         EXPIRED
     }
 }
-

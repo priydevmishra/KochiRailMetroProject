@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/api/v1/notifications")
+@RequestMapping("/api/v1/notifications")  // ise hum phase 2 me bnaayenge... tab tak isko aise hi chod dia hai, iski saari ko likh lenaa.. Aur GPT se pooch lena, controller aur iski service layer bhej ke ki kaise working hai...
 public class NotificationController {
 
     private final NotificationRepository notificationRepository;

@@ -24,7 +24,7 @@ public class DocumentProcessingService {
     private final DocumentRepository documentRepository;
     private final MLService mlService;
 
-    // ✅ Removed LocalFileStorageService
+    // Removed LocalFileStorageService
     public DocumentProcessingService(DocumentRepository documentRepository,
                                      MLService mlService) {
         this.documentRepository = documentRepository;
@@ -43,7 +43,7 @@ public class DocumentProcessingService {
             content.setDocument(document);
             content.setProcessingStatus(DocumentContent.ProcessingStatus.PROCESSING);
 
-            // ✅ Download file from Cloudinary
+            // Download file from Cloudinary
             byte[] fileData = downloadFromCloudinary(document.getCloudinarySecureUrl());
 
             // Extract text based on file type
@@ -79,7 +79,7 @@ public class DocumentProcessingService {
         return CompletableFuture.completedFuture(null);
     }
 
-    // ✅ Cloudinary file downloader
+    // Cloudinary file downloader
     private byte[] downloadFromCloudinary(String cloudinaryUrl) throws IOException {
         try (InputStream in = new URL(cloudinaryUrl).openStream()) {
             return in.readAllBytes();

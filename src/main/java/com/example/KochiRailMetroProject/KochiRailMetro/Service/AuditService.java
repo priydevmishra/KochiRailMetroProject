@@ -45,7 +45,7 @@ public class AuditService {
                 auditLog.setDocument(document);
             }
 
-            // ✅ Convert String to Enum safely
+            // Convert String to Enum safely
             try {
                 AuditAction auditAction = AuditAction.valueOf(action);
                 auditLog.setAction(auditAction);
