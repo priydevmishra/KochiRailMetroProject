@@ -1,15 +1,19 @@
 package com.example.KochiRailMetroProject.KochiRailMetro.Controller;
 
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.ApiResponse;
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.DocumentDto;
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.GmailSyncStatusDto;
 import com.example.KochiRailMetroProject.KochiRailMetro.Security.UserPrincipal;
 import com.example.KochiRailMetroProject.KochiRailMetro.Service.GmailService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/gmail") // gmail injestion ke liye API hai..

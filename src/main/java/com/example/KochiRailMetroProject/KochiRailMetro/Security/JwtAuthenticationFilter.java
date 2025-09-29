@@ -1,10 +1,7 @@
 package com.example.KochiRailMetroProject.KochiRailMetro.Security;
 
-import com.example.KochiRailMetroProject.KochiRailMetro.Service.UserDetailsServiceImpl;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,7 +10,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
+import com.example.KochiRailMetroProject.KochiRailMetro.Service.UserDetailsServiceImpl;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -43,7 +45,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (path.startsWith("/api/v1/auth") ||
                 path.startsWith("/api/v1/email") ||
-                path.equals("/api/v1/gmail/sync") ||
                 path.startsWith("/h2-console")) {
             filterChain.doFilter(request, response);
             return;

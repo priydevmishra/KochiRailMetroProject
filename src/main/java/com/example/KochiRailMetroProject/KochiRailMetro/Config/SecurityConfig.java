@@ -1,8 +1,7 @@
 package com.example.KochiRailMetroProject.KochiRailMetro.Config;
 
-import com.example.KochiRailMetroProject.KochiRailMetro.Security.JwtAuthenticationEntryPoint;
-import com.example.KochiRailMetroProject.KochiRailMetro.Security.JwtAuthenticationFilter;
-import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,7 +19,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import com.example.KochiRailMetroProject.KochiRailMetro.Security.JwtAuthenticationEntryPoint;
+import com.example.KochiRailMetroProject.KochiRailMetro.Security.JwtAuthenticationFilter;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
@@ -40,13 +42,12 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())   // still valid, but inside lambda
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ✅ new style
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**","/api/v1/login/oauth2/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/v1/health/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/gmail/sync").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/email/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/register/manager").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/users/register/employee").hasRole("MANAGER")

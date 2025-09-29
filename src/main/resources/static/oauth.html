@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail OAuth2 Authorization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #4285f4;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .btn:hover {
+            background-color: #3367d6;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .code {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gmail OAuth2 Authorization</h1>
+        
+        <h2>Current Status</h2>
+        <div id="status">Checking authorization status...</div>
+        
+        <h2>Authorization Steps</h2>
+        <ol>
+            <li>Click the "Authorize Gmail Access" button below</li>
+            <li>You'll be redirected to Google's authorization page</li>
+            <li>Grant permission to access your Gmail account</li>
+            <li>You'll be redirected back to this application</li>
+            <li>Once authorized, you can sync Gmail emails</li>
+        </ol>
+        
+        <h2>Actions</h2>
+        <a href="/api/v1/login/oauth2/authorize/google" class="btn">Authorize Gmail Access</a>
+        <button onclick="checkStatus()" class="btn" style="background-color: #17a2b8;">Check Status</button>
+        <button onclick="revokeAccess()" class="btn" style="background-color: #dc3545;">Revoke Access</button>
+        
+        <h2>API Endpoints</h2>
+        <div class="code">
+            GET /api/v1/login/oauth2/authorize/google - Start OAuth2 flow<br>
+            GET /api/v1/login/oauth2/status - Check authorization status<br>
+            POST /api/v1/login/oauth2/revoke - Revoke authorization<br>
+            POST /api/v1/gmail/sync - Sync Gmail emails (requires authorization)<br>
+            GET /api/v1/gmail/unsynced-count - Get unsynced emails count
+        </div>
+        
+        <h2>Configuration</h2>
+        <p>The application is configured with the following redirect URIs:</p>
+        <div class="code">
+            http://localhost:8091/api/v1/login/oauth2/code/google<br>
+            https://matrixsyncer.duckdns.org/api/v1/login/oauth2/code/google
+        </div>
+    </div>
+
+    <script>
+        async function checkStatus() {
+            try {
+                const response = await fetch('/api/v1/login/oauth2/status');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('status');
+                if (data.success) {
+                    statusDiv.innerHTML = `<span class="success">✓ ${data.message}</span>`;
+                } else {
+                    statusDiv.innerHTML = `<span class="error">✗ ${data.message}</span>`;
+                }
+            } catch (error) {
+                document.getElementById('status').innerHTML = `<span class="error">Error checking status: ${error}</span>`;
+            }
+        }
+        
+        async function revokeAccess() {
+            if (confirm('Are you sure you want to revoke Gmail access?')) {
+                try {
+                    const response = await fetch('/api/v1/login/oauth2/revoke', { method: 'POST' });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert('Access revoked successfully');
+                        checkStatus();
+                    } else {
+                        alert('Failed to revoke access: ' + data.message);
+                    }
+                } catch (error) {
+                    alert('Error revoking access: ' + error);
+                }
+            }
+        }
+        
+        // Check status on page load
+        checkStatus();
+        
+        // Handle OAuth callback
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('code')) {
+            document.getElementById('status').innerHTML = '<span class="success">✓ Authorization successful! You can now sync Gmail emails.</span>';
+        } else if (urlParams.get('error')) {
+            document.getElementById('status').innerHTML = '<span class="error">✗ Authorization failed: ' + urlParams.get('error') + '</span>';
+        }
+    </script>
+</body>
+</html>
