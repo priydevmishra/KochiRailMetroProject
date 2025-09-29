@@ -11,7 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.hibernate.Hibernate;   // 🔴 Added import
+import org.hibernate.Hibernate;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -36,12 +37,52 @@ public class WorkflowService {
         this.auditService = auditService;
     }
 
+    // Helper method to convert Entity -> DTO
+    private WorkflowResponseDto mapToDto(DocumentWorkflow wf) {
+        return new WorkflowResponseDto(
+                wf.getId(),
+                new DocumentBasicDto(
+                        wf.getDocument().getId(),
+                        wf.getDocument().getFilename(),
+                        wf.getDocument().getOriginalFilename(),
+                        wf.getDocument().getCloudUrl(),
+                        wf.getDocument().getContent() != null ? new DocumentContentDto(
+                                wf.getDocument().getContent().getExtractedText(),
+                                wf.getDocument().getContent().getSummary(),
+                                wf.getDocument().getContent().getMlSummary(),
+                                wf.getDocument().getContent().getDepartment(),
+                                wf.getDocument().getContent().getPriority(),
+                                wf.getDocument().getContent().getDeadline() != null ?
+                                        wf.getDocument().getContent().getDeadline().toString() : null
+                        ) : null
+                ),
+                wf.getAssignedTo() != null ? new UserBasicDto(
+                        wf.getAssignedTo().getId(),
+                        wf.getAssignedTo().getUsername(),
+                        wf.getAssignedTo().getEmail(),
+                        wf.getAssignedTo().getFullName()
+                ) : null,
+                wf.getAssignedBy() != null ? new UserBasicDto(
+                        wf.getAssignedBy().getId(),
+                        wf.getAssignedBy().getUsername(),
+                        wf.getAssignedBy().getEmail(),
+                        wf.getAssignedBy().getFullName()
+                ) : null,
+                wf.getCreatedBy() != null ? new UserBasicDto(
+                        wf.getCreatedBy().getId(),
+                        wf.getCreatedBy().getUsername(),
+                        wf.getCreatedBy().getEmail(),
+                        wf.getCreatedBy().getFullName()
+                ) : null,
+                wf.getCurrentStatus().name()
+        );
+    }
+
+
     // Admin -> auto assign to manager of document.department
     @Transactional
     public WorkflowResponseDto assignToDepartmentManager(Long documentId,
                                                          UserPrincipal currentUser) {
-
-        // 🔹 Fetch document
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("Document not found"));
 
@@ -50,22 +91,18 @@ public class WorkflowService {
             throw new RuntimeException("Document has no department assigned");
         }
 
-        // 🔹 Fetch manager
         User manager = userRepository.findFirstManagerByDepartmentCode(department.getCode())
                 .orElseThrow(() -> new RuntimeException("No manager found for department " + department.getCode()));
 
-        // 🔹 Fetch admin (current user)
         User admin = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new RuntimeException("Admin user not found"));
 
-        // 🔹 Create workflow
         DocumentWorkflow workflow = new DocumentWorkflow();
         workflow.setDocument(document);
         workflow.setCreatedBy(admin);
         workflow.setAssignedTo(manager);
         workflow.setCurrentStatus(DocumentWorkflow.WorkflowStatus.PENDING);
 
-        // 🔹 Use deadline from DocumentContent if exists
         DocumentContent content = document.getContent();
         if (content != null && content.getDeadline() != null) {
             workflow.setDeadline(content.getDeadline());
@@ -79,51 +116,9 @@ public class WorkflowService {
 
         notificationService.sendTaskNotification(workflow);
 
-        // 🔹 Build DTOs for response (convert LocalDateTime to String)
-        DocumentContentDto contentDto = null;
-        if (content != null) {
-            contentDto = new DocumentContentDto(
-                    content.getExtractedText(),
-                    content.getSummary(),
-                    content.getMlSummary(),
-                    content.getDepartment(),
-                    content.getPriority(),
-                    content.getDeadline() != null ? content.getDeadline().toString() : null // convert to String
-            );
-        }
-
-        DocumentBasicDto docDto = new DocumentBasicDto(
-                document.getId(),
-                document.getFilename(),
-                document.getOriginalFilename(),
-                document.getCloudUrl(),
-                contentDto
-        );
-
-        UserBasicDto managerDto = new UserBasicDto(
-                manager.getId(),
-                manager.getUsername(),
-                manager.getEmail(),
-                manager.getFullName()
-        );
-
-        UserBasicDto adminDto = new UserBasicDto(
-                admin.getId(),
-                admin.getUsername(),
-                admin.getEmail(),
-                admin.getFullName()
-        );
-
-        // 🔹 Return DTO (check WorkflowResponseDto constructor matches fields)
-        return new WorkflowResponseDto(
-                workflow.getId(),
-                docDto,
-                managerDto,
-                adminDto,
-                workflow.getCurrentStatus().name()
-        );
+        // ✅ Instead of manually building dto here, reuse mapToDto
+        return mapToDto(workflow);
     }
-
 
     // Manager -> assign to employee
     @Transactional
@@ -166,26 +161,32 @@ public class WorkflowService {
                 "Manager assigned to employee " + employee.getFullName());
         notificationService.sendTaskNotification(workflow);
 
-        // CHANGE: unproxy before returning
         return (DocumentWorkflow) Hibernate.unproxy(workflow);
     }
 
-    public Page<DocumentWorkflow> getMyWorkflows(UserPrincipal currentUser, Pageable pageable) {
+    // Changed return type from Page<DocumentWorkflow> → Page<WorkflowResponseDto>
+    public Page<WorkflowResponseDto> getMyWorkflows(UserPrincipal currentUser, Pageable pageable) {
         User user = new User();
         user.setId(currentUser.getId());
-        return workflowRepository.findByAssignedTo(user, pageable);
+        return workflowRepository.findByAssignedTo(user, pageable)
+                .map(this::mapToDto);  // convert each entity to dto
     }
 
-    public Page<DocumentWorkflow> getPendingWorkflows(UserPrincipal currentUser, Pageable pageable) {
+    // Changed return type from Page<DocumentWorkflow> → Page<WorkflowResponseDto>
+    public Page<WorkflowResponseDto> getPendingWorkflows(UserPrincipal currentUser, Pageable pageable) {
         User user = new User();
-        user.setId(currentUser.getId());
+        user.setId(currentUser.getId()); // bas ID set karna enough hai
 
         List<DocumentWorkflow.WorkflowStatus> pendingStatuses = List.of(
                 DocumentWorkflow.WorkflowStatus.PENDING,
                 DocumentWorkflow.WorkflowStatus.IN_PROGRESS
         );
-        return workflowRepository.findByAssignedToAndStatusIn(user, pendingStatuses, pageable);
+
+        // Repository call → Entity to DTO map
+        return workflowRepository.findByAssignedToAndStatusIn(user, pendingStatuses, pageable)
+                .map(this::mapToDto);
     }
+
 
     public DocumentWorkflow updateWorkflowStatus(Long workflowId,
                                                  DocumentWorkflow.WorkflowStatus newStatus,
@@ -205,7 +206,7 @@ public class WorkflowService {
                 "WORKFLOW_STATUS_UPDATED",
                 "Status changed from " + oldStatus + " to " + newStatus + ". Comments: " + comments);
 
-        return (DocumentWorkflow) Hibernate.unproxy(workflow);  // Also unproxy here
+        return (DocumentWorkflow) Hibernate.unproxy(workflow);
     }
 
     public List<DocumentWorkflow> getUpcomingDeadlines(int daysAhead) {

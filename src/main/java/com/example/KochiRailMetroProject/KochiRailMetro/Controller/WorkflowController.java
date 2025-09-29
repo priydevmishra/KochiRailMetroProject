@@ -54,27 +54,31 @@ public class WorkflowController {
 
     // My workflows (paged)
     @GetMapping("/my-workflows")
-    public ResponseEntity<ApiResponse<Page<DocumentWorkflow>>> getMyWorkflows(
+    public ResponseEntity<ApiResponse<Page<WorkflowResponseDto>>> getMyWorkflows(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size,
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<DocumentWorkflow> workflows = workflowService.getMyWorkflows(currentUser, pageable);
+        Page<WorkflowResponseDto> workflows = workflowService.getMyWorkflows(currentUser, pageable);
         return ResponseEntity.ok(new ApiResponse<>(true, "Workflows retrieved", workflows));
     }
 
+
     // iss method ko baad me acche se likhenge isko GPT pe daalke iski working likh lena..
     @GetMapping("/pending")
-    public ResponseEntity<ApiResponse<Page<DocumentWorkflow>>> getPendingWorkflows(
+    public ResponseEntity<ApiResponse<Page<WorkflowResponseDto>>> getPendingWorkflows(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size,
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<DocumentWorkflow> workflows = workflowService.getPendingWorkflows(currentUser, pageable);
+
+        Page<WorkflowResponseDto> workflows = workflowService.getPendingWorkflows(currentUser, pageable);
+
         return ResponseEntity.ok(new ApiResponse<>(true, "Pending workflows retrieved", workflows));
     }
+
 
     // isko bhi baad me shi se design karenge...iskaa flow dekh kar likh lena...
     @PutMapping("/{id}/status")

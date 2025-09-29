@@ -1,7 +1,7 @@
 server:
   port: 8091
   servlet:
-    context-path: /api
+    context-path: /
 
 spring:
   application:
@@ -39,10 +39,10 @@ task:
 app:
   jwtSecret: ${JWT_SECRET:mySecretKey123456789mySecretKey123456789}
   jwtExpirationInMs: 86400000
-  base-url: ${BASE_URL:http://localhost:8080}
+  base-url: ${BASE_URL:https://matrixsyncer.duckdns.org}  # Updated to match OAuth2 base URL
   mail:
     from: metrixsync454@gmail.com
-    base-url: http://localhost:8080
+    base-url: https://matrixsyncer.duckdns.org
   file-storage:
     base-path: ./uploads
     max-file-size: 104857600   # 100MB in bytes
@@ -66,8 +66,10 @@ logging:
   level:
     com.example.KochiRailMetroProject.KochiRailMetro: DEBUG
     com.example.KochiRailMetroProject.KochiRailMetro.Service.AIDocumentService: INFO
-    org.springframework.security: WARN
     org.hibernate.SQL: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2.client: DEBUG
+    org.springframework.web.client.RestTemplate: DEBUG
     root: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
@@ -78,7 +80,7 @@ logging:
 google:
   gmail:
     credentials:
-      file: "C:/Users/PRIYD/Documents/SpringBoot Practice/KochiRailMetro/credentials/gmail-credentials.json"
+      file: "C:/Users/PRIYD/Desktop/KochiRail/KochiRailMetro/credentials/gmail-credentials.json"
     user:
       email: "metrixsync454@gmail.com"
 
@@ -99,6 +101,28 @@ mail:
         timeout: 5000
         writetimeout: 5000
   test-connection: true
+
+# Spring Security OAuth2 Client Configuration
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 114068760784-5lfg2kjj20092utjkn96f0cv9iklov9j.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - openid
+              - profile
+              - email
+              - https://www.googleapis.com/auth/gmail.readonly
+            redirect-uri: "https://matrixsyncer.duckdns.org/api/v1/login/oauth2/code/google"
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+            user-name-attribute: sub
 
 main:
   allow-circular-references: true

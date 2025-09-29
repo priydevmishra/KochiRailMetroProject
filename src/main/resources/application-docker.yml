@@ -1,0 +1,63 @@
+server:
+  port: ${SERVER_PORT:8091}
+  servlet:
+    context-path: /
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:}
+            client-secret: ${GOOGLE_CLIENT_SECRET:}
+            redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8091/api/v1/login/oauth2/code/google}
+
+app:
+  jwtSecret: ${JWT_SECRET}
+  base-url: ${BASE_URL}
+  mail:
+    from: ${MAIL_USERNAME}
+    base-url: ${BASE_URL}
+  file-storage:
+    base-path: /app/uploads
+
+google:
+  gmail:
+    credentials:
+      file: ${GMAIL_CREDENTIALS_FILE:/app/credentials/gmail-credentials.json}
+    user:
+      email: ${MAIL_USERNAME}
+
+mail:
+  debug-mode: true
+  host: ${MAIL_HOST:smtp.gmail.com}
+  port: ${MAIL_PORT:587}
+  username: ${MAIL_USERNAME}
+  password: ${MAIL_PASSWORD}
+  protocol: smtp
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+        connectiontimeout: 5000
+        timeout: 5000
+        writetimeout: 5000
+  test-connection: false

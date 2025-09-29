@@ -1,0 +1,30 @@
+# Maven
+target/
+.mvn/
+mvnw
+mvnw.cmd
+
+# IDE
+.idea/
+.project
+.classpath
+.settings/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Credentials (mount at runtime instead)
+credentials/
+**/gmail-credentials.json
+tokens/
+**/StoredCredential
+
+# Misc
+*.gz
+test.pdf

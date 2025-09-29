@@ -1,23 +1,26 @@
 package com.example.KochiRailMetroProject.KochiRailMetro.Service;
 
-import com.example.KochiRailMetroProject.KochiRailMetro.Entity.Document;
-import com.example.KochiRailMetroProject.KochiRailMetro.Entity.DocumentContent;
-import com.example.KochiRailMetroProject.KochiRailMetro.Entity.DocumentMetadata;
-import com.example.KochiRailMetroProject.KochiRailMetro.Repository.DocumentRepository;
-import jakarta.transaction.Transactional;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.concurrent.CompletableFuture;
+
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.net.URL;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.concurrent.CompletableFuture;
+import com.example.KochiRailMetroProject.KochiRailMetro.Entity.Document;
+import com.example.KochiRailMetroProject.KochiRailMetro.Entity.DocumentContent;
+import com.example.KochiRailMetroProject.KochiRailMetro.Entity.DocumentMetadata;
+import com.example.KochiRailMetroProject.KochiRailMetro.Repository.DocumentRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class DocumentProcessingService {
@@ -34,17 +37,26 @@ public class DocumentProcessingService {
     @Async
     @Transactional
     public CompletableFuture<Void> processDocumentAsync(Long documentId) {
+        Document document = null;
         try {
-            Document document = documentRepository.findById(documentId)
+            document = documentRepository.findById(documentId)
                     .orElseThrow(() -> new RuntimeException("Document not found"));
 
-            // Create document content record
+            // Create/attach document content record early to persist PROCESSING state
             DocumentContent content = new DocumentContent();
             content.setDocument(document);
             content.setProcessingStatus(DocumentContent.ProcessingStatus.PROCESSING);
+            document.setContent(content);
+            documentRepository.save(document);
+
+            // Validate Cloudinary URL before download
+            String secureUrl = document.getCloudinarySecureUrl();
+            if (secureUrl == null || secureUrl.isBlank()) {
+                throw new IllegalArgumentException("Missing Cloudinary URL for document " + documentId);
+            }
 
             // Download file from Cloudinary
-            byte[] fileData = downloadFromCloudinary(document.getCloudinarySecureUrl());
+            byte[] fileData = downloadFromCloudinary(secureUrl);
 
             // Extract text based on file type
             String extractedText = extractTextFromFile(fileData, document.getMimeType());
@@ -63,16 +75,28 @@ public class DocumentProcessingService {
             content.setProcessingStatus(DocumentContent.ProcessingStatus.COMPLETED);
             content.setProcessedAt(LocalDateTime.now());
 
-            // Save content
-            document.setContent(content);
+            // Save updates
             documentRepository.save(document);
 
         } catch (Exception e) {
-            // Mark processing as failed
-            Document document = documentRepository.findById(documentId).orElse(null);
-            if (document != null && document.getContent() != null) {
-                document.getContent().setProcessingStatus(DocumentContent.ProcessingStatus.FAILED);
-                documentRepository.save(document);
+            // Mark processing as failed with best-effort persistence
+            if (document == null) {
+                document = documentRepository.findById(documentId).orElse(null);
+            }
+            if (document != null) {
+                DocumentContent dc = document.getContent();
+                if (dc == null) {
+                    dc = new DocumentContent();
+                    dc.setDocument(document);
+                    document.setContent(dc);
+                }
+                dc.setProcessingStatus(DocumentContent.ProcessingStatus.FAILED);
+                dc.setProcessedAt(LocalDateTime.now());
+                try {
+                    documentRepository.save(document);
+                } catch (Exception ignored) {
+                    // swallow to not mask original error
+                }
             }
             throw new RuntimeException("Document processing failed", e);
         }
@@ -95,26 +119,32 @@ public class DocumentProcessingService {
                 return extractTextFromPdf(fileData);
             case "text/plain":
             case "application/json":
-                return new String(fileData);
+                return new String(fileData, StandardCharsets.UTF_8);
             default:
                 return "";
         }
     }
 
     private String extractTextFromPdf(byte[] pdfData) throws IOException {
-        try (PDDocument document = PDDocument.load(new ByteArrayInputStream(pdfData))) {
+        try (PDDocument document = Loader.loadPDF(pdfData)) {
             PDFTextStripper stripper = new PDFTextStripper();
             return stripper.getText(document);
         }
     }
 
     private void extractMetadata(Document document, byte[] fileData, String extractedText) {
+        if (document.getDocumentSource() == null) {
+            return;
+        }
         switch (document.getDocumentSource()) {
             case GMAIL:
                 extractGmailMetadata(document, extractedText);
                 break;
             case WHATSAPP:
                 extractWhatsAppMetadata(document, extractedText);
+                break;
+            default:
+                // Unknown or unsupported source
                 break;
         }
     }

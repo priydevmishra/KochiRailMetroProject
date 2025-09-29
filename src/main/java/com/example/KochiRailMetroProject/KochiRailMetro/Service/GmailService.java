@@ -1,8 +1,38 @@
 package com.example.KochiRailMetroProject.KochiRailMetro.Service;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.DocumentDto;
 import com.example.KochiRailMetroProject.KochiRailMetro.DTO.GmailSyncStatusDto;
-import com.example.KochiRailMetroProject.KochiRailMetro.Entity.*;
+import com.example.KochiRailMetroProject.KochiRailMetro.Entity.AuditAction;
+import com.example.KochiRailMetroProject.KochiRailMetro.Entity.AuditLog;
+import com.example.KochiRailMetroProject.KochiRailMetro.Entity.Document;
+import com.example.KochiRailMetroProject.KochiRailMetro.Entity.GmailSyncHistory;
+import com.example.KochiRailMetroProject.KochiRailMetro.Entity.User;
 import com.example.KochiRailMetroProject.KochiRailMetro.Repository.AuditLogRepository;
 import com.example.KochiRailMetroProject.KochiRailMetro.Repository.GmailSyncHistoryRepository;
 import com.example.KochiRailMetroProject.KochiRailMetro.Repository.UserRepository;
@@ -10,8 +40,6 @@ import com.example.KochiRailMetroProject.KochiRailMetro.Security.UserPrincipal;
 import com.example.KochiRailMetroProject.KochiRailMetro.util.CustomMultipartFile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -21,20 +49,11 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
-import com.google.api.services.gmail.model.*;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-import java.time.LocalDateTime;
-import java.util.*;
+import com.google.api.services.gmail.model.ListMessagesResponse;
+import com.google.api.services.gmail.model.Message;
+import com.google.api.services.gmail.model.MessagePart;
+import com.google.api.services.gmail.model.MessagePartBody;
+import com.google.api.services.gmail.model.MessagePartHeader;
 
 @Service
 public class GmailService {
@@ -387,22 +406,33 @@ public class GmailService {
 
     private Gmail getGmailService() throws IOException, GeneralSecurityException {
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        return new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+        return new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials())
                 .setApplicationName(APPLICATION_NAME)
                 .build();
     }
 
-    private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
+    private Credential getCredentials() throws IOException, GeneralSecurityException {
         try (InputStream in = new FileInputStream(credentialsFilePath)) {
             GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
             GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                    HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
+                    GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, clientSecrets, SCOPES)
                     .setDataStoreFactory(new FileDataStoreFactory(new File(TOKENS_DIRECTORY_PATH)))
                     .setAccessType("offline")
                     .setApprovalPrompt("force")
                     .build();
-            LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8889).build();
-            return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
+            
+            Credential credential = flow.loadCredential("user");
+            
+            if (credential == null) {
+                throw new IOException("OAuth2 credentials not found. Please authorize the application first by visiting /api/v1/login/oauth2/authorize/google");
+            }
+            
+            // Refresh token if needed
+            if (credential.getExpiresInSeconds() != null && credential.getExpiresInSeconds() <= 60) {
+                credential.refreshToken();
+            }
+            
+            return credential;
         }
     }
 

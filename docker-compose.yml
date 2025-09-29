@@ -1,0 +1,75 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: kmrl-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: kmrl
+      MYSQL_USER: kmrl
+      MYSQL_PASSWORD: kmrlpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3306:3306"
+    command: ["mysqld", "--default-authentication-plugin=mysql_native_password", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kmrl-app
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      # Spring Datasource
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/kmrl?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: kmrl
+      SPRING_DATASOURCE_PASSWORD: kmrlpass
+
+      # App (JWT, base URL) — picked by application.yml
+      JWT_SECRET: MyUltraSecureSecretKeyForJWTAuth1234567890
+      BASE_URL: https://matrixsyncer.duckdns.org
+
+      # Mail (GMail SMTP)
+      MAIL_HOST: smtp.gmail.com
+      MAIL_PORT: 587
+      MAIL_USERNAME: metrixsync454@gmail.com
+      MAIL_PASSWORD: slckphyqlresrgss
+
+      # Google OAuth (if enabled)
+      GOOGLE_CLIENT_ID: 114068760784-5lfg2kjj20092utjkn96f0cv9iklov9j.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: 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
+      GOOGLE_REDIRECT_URI: https://matrixsyncer.duckdns.org/api/v1/login/oauth2/code/google
+
+      # Gmail API local credential file path inside container
+      GMAIL_CREDENTIALS_FILE: /app/credentials/gmail-credentials.json
+
+      # AI Service
+      ML_API_KEY:
+
+      # Server
+      SERVER_PORT: 8091
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8091:8091"
+    volumes:
+      - app_uploads:/app/uploads
+      - app_logs:/app/logs
+      - ./credentials/gmail-credentials.json:/app/credentials/gmail-credentials.json:ro
+      - ./logs:/app/logs
+      - ./tokens:/app/tokens
+
+volumes:
+  db_data:
+  app_uploads:
+  app_logs:
